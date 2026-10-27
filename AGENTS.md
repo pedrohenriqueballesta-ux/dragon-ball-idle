@@ -1,0 +1,34 @@
+# Guia do projeto
+
+Este é um protótipo local de RPG idle de Dragon Ball em 2D visto de cima.
+
+## Executar e verificar
+
+- Node.js 22 ou superior. Não há dependências externas.
+- npm start inicia o servidor em http://localhost:3000.
+- npm test executa as regras e a integração de dois jogadores.
+- npm run check verifica sintaxe.
+
+## Arquitetura
+
+- public/engine.mjs é a simulação autoritativa compartilhada, executada pelo servidor.
+- server.mjs recebe intenções, valida sessões e transmite o estado.
+- public/game.mjs apresenta o estado e recebe controles; o navegador não decide XP, dano, estoque ou recargas.
+- public/art.mjs e public/view.mjs cuidam, respectivamente, das artes e da câmera, sem alterar as regras do servidor.
+- public/style.css cuida de desktop e telas pequenas.
+- data/save.json é estado local de execução e fica fora das entregas de código.
+
+## Decisões que devem ser preservadas
+
+- Mundo compartilhado; PvP apenas na região designada, validado para todos os tipos de dano.
+- Movimento por teclado/toque e caça automática opcional por região.
+- Técnicas, transformações e todos os atributos progridem automaticamente conforme classe e nível. Não há distribuição manual de atributos.
+- A comida gera a cura ao longo de um período. Não há regeneração gratuita de vida fora desse efeito.
+- Sementes curam instantaneamente e todas as potências respeitam a mesma recarga. Trocar item ou potência não remove o intervalo.
+- Inventário tem limite de peso que cresce com o nível.
+- A sessão desconectada não continua caçando.
+
+Os números, marcos de nível e decisões provisórias estão explicados em LEIA_PRIMEIRO.md. O conceito e o estado da entrega estão em docs/. Requisitos confirmados devem permanecer separados de novas propostas.
+
+Use testes quando alterar regras de combate, recuperação, progressão e inventário. Preserve a execução sem instalação de pacotes enquanto isso atender ao protótipo. Goku é o único personagem implementado nesta versão.
+

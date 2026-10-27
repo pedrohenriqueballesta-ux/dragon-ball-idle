@@ -1,0 +1,14 @@
+{
+  "name": "dragon-ball-idle-prototipo",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Primeiro protótipo local de RPG idle com servidor multiplayer.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check server.mjs && node --check public/engine.mjs && node --check public/game.mjs && node --check public/art.mjs && node --check public/view.mjs"
+  }
+}
