@@ -1,54 +1,10 @@
-// Regras compartilhadas do protótipo. Todos os números são ajustáveis.
-export const CONFIG = Object.freeze({
-  width: 3300, height: 2200, foodDuration: 300, foodHealPerSecond: 2,
-  seedCooldown: 20, kiCooldown: 8, pickupRadius: 60, respawnDelay: 4,
-  seedPotencies: [15, 30, 50, 100],
-  itemWeights: { food: 0.35, ki: 0.2, seed15: 0.08, seed30: 0.08, seed50: 0.08, seed100: 0.08, scrap: 0.7, crystal: 0.45 },
-  prices: { food: 12, ki: 18, seed15: 90, seed30: 210, seed50: 480, seed100: 1400 },
-  skills: { ki: 2, dash: 2, kame: 3, transform: 5 }
-});
-export const ZONES = [
-  { id: 'vila', name: 'Vila do Lago', x: 70, y: 70, w: 650, h: 540, pvp: false },
-  { id: 'campos', name: 'Campos da Terra', x: 800, y: 120, w: 1780, h: 1070, pvp: false },
-  { id: 'cratera', name: 'Cratera Rubra', x: 700, y: 1320, w: 1880, h: 700, pvp: false },
-  { id: 'arena', name: 'Fronteira de Combate', x: 2720, y: 220, w: 490, h: 1750, pvp: true }
-];
-export const MERCHANT = { x: 430, y: 300 };
-export const OBSTACLES = [
-  { x: 180, y: 180, r: 42, type: 'tree' }, { x: 610, y: 180, r: 42, type: 'tree' },
-  { x: 165, y: 515, r: 44, type: 'tree' }, { x: 660, y: 570, r: 38, type: 'tree' },
-  { x: 850, y: 430, r: 32, type: 'rock' }, { x: 1220, y: 310, r: 45, type: 'tree' },
-  { x: 1730, y: 380, r: 40, type: 'tree' }, { x: 2220, y: 250, r: 40, type: 'tree' },
-  { x: 2050, y: 830, r: 38, type: 'rock' }, { x: 1430, y: 890, r: 48, type: 'tree' },
-  { x: 2410, y: 1100, r: 46, type: 'tree' }, { x: 980, y: 1120, r: 40, type: 'tree' },
-  { x: 1010, y: 1530, r: 44, type: 'rock' }, { x: 1360, y: 1840, r: 50, type: 'rock' },
-  { x: 2130, y: 1460, r: 46, type: 'rock' }, { x: 2440, y: 1890, r: 44, type: 'rock' },
-  { x: 2750, y: 120, r: 38, type: 'rock' }, { x: 2660, y: 2060, r: 45, type: 'tree' }
-];
-export const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
-export const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-export function zoneAt(x, y) {
-  return ZONES.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || null;
-}
-export function statsFor(level) {
-  const n = Math.max(0, level - 1);
-  return { hp: 120 + n * 22, ki: 80 + n * 10, attack: 12 + n * 2.8,
-    defense: 2 + n * 0.65, healing: 1 + n * 0.08, capacity: 20 + n * 1.3,
-    lootChance: Math.min(0.8, 0.35 + n * 0.008), mobility: 175 + Math.min(60, n * 2) };
-}
-export const xpForLevel = level => Math.round(30 * Math.pow(level, 1.35));
-export function bagWeight(inv) {
-  return Object.entries(CONFIG.itemWeights).reduce((sum, pair) => sum + (inv[pair[0]] || 0) * pair[1], 0);
-}
-function norm(x, y) {
-  const d = Math.hypot(x, y) || 1;
-  return { x: x / d, y: y / d };
-}
-function segmentDistance(px, py, ax, ay, bx, by) {
-  const dx = bx - ax, dy = by - ay;
-  const t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1);
-  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
-}
+// Regras autoritativas do jogo: combate, movimento, inventário e mundo.
+// Rodam no servidor; o navegador apenas apresenta o estado que chega daqui.
+import { CONFIG, ZONES, MERCHANT, OBSTACLES, zoneAt } from './config.mjs';
+import { clamp, distance, norm, segmentDistance } from './math.mjs';
+import { statsFor, xpForLevel, bagWeight, createPlayer, exportPlayer as serializePlayer } from './characters.mjs';
+import { mobStats, spawnPoints } from './enemies.mjs';
+
 export class Game {
   constructor({ now = Date.now() / 1000, random = Math.random, populate = true } = {}) {
     this.time = now; this.random = random; this.players = new Map(); this.mobs = new Map();
@@ -59,46 +15,18 @@ export class Game {
   emit(type, data = {}) { this.events.push({ id: this.uid('e'), type, at: this.time, ...data }); }
   notify(p, text) { this.emit('message', { playerId: p.id, text }); }
   addPlayer(id, name = 'Guerreiro', saved = null) {
-    const level = clamp(Math.floor(Number(saved?.level) || 1), 1, 100);
-    const stats = statsFor(level);
-    const inventory = { food: 5, ki: 4, seed15: 2, seed30: 1, seed50: 1, seed100: 1, scrap: 0, crystal: 0 };
-    if (saved?.inventory) for (const key of Object.keys(inventory)) inventory[key] = clamp(Math.floor(Number(saved.inventory[key]) || 0), 0, 99999);
-    const p = { id, name: String(name).trim().slice(0, 18) || 'Guerreiro', character: 'Goku', level,
-      xp: clamp(Number(saved?.xp) || 0, 0, xpForLevel(level) - 1), stats,
-      x: clamp(Number(saved?.x) || 430, 40, CONFIG.width - 40), y: clamp(Number(saved?.y) || 440, 40, CONFIG.height - 40),
-      hp: clamp(saved?.hp == null ? stats.hp : Number(saved.hp), 1, stats.hp),
-      ki: clamp(saved?.ki == null ? stats.ki : Number(saved.ki), 0, stats.ki),
-      zeni: clamp(Number(saved?.zeni ?? 200), 0, 9999999), inventory, kills: Number(saved?.kills) || 0,
-      input: { x: 0, y: 0 }, facing: { x: 1, y: 0 }, aim: null, inputAt: this.time,
-      autoAttack: false, autoSkills: false, autoHunt: false, huntZone: 'campos', targetId: null,
-      moving: false, moveTo: null, seedSelected: 15, foodUntil: Number(saved?.foodUntil) || 0,
-      seedReady: Number(saved?.seedReady) || 0, kiReady: Number(saved?.kiReady) || 0,
-      basicReady: 0, shotReady: 0, kameReady: 0, dashReady: 0, dashUntil: 0, charge: null,
-      transformed: false, respawnAt: 0, connected: true, autoFood: true, autoKi: false, autoSeed: false,
-      lastBagNotice: 0, bossKills: Number(saved?.bossKills) || 0 };
+    const p = createPlayer(id, name, saved, this.time);
     this.players.set(id, p); return p;
   }
-  exportPlayer(p) {
-    return { name: p.name, level: p.level, xp: p.xp, x: p.x, y: p.y, hp: p.hp, ki: p.ki,
-      zeni: p.zeni, inventory: p.inventory, kills: p.kills, bossKills: p.bossKills,
-      foodUntil: p.foodUntil, seedReady: p.seedReady, kiReady: p.kiReady };
-  }
+  exportPlayer(p) { return serializePlayer(p); }
   addMob(type, x, y, zone = 'campos') {
-    const info = type === 'boss' ? { hp: 650, attack: 30, xp: 140, speed: 80, name: 'Guardião da Cratera' }
-      : type === 'ranged' ? { hp: zone === 'cratera' ? 105 : 60, attack: 12, xp: 17, speed: 108, name: 'Sentinela alienígena' }
-      : { hp: zone === 'cratera' ? 90 : 42, attack: zone === 'cratera' ? 15 : 8, xp: zone === 'cratera' ? 18 : 10, speed: 115, name: 'Saibaman' };
+    const info = mobStats(type, zone);
     const m = { id: this.uid('m'), type, zone, x, y, homeX: x, homeY: y, ...info, maxHp: info.hp,
       attackReady: this.time + 1, telegraph: null, deadUntil: 0, moving: false };
     this.mobs.set(m.id, m); return m;
   }
   populate() {
-    for (let i = 0; i < 14; i++) {
-      const x = 1000 + (i % 5) * 290 + this.random() * 65;
-      const y = 500 + Math.floor(i / 5) * 235 + this.random() * 60;
-      this.addMob(i % 4 === 3 ? 'ranged' : 'melee', x, y);
-    }
-    for (let i = 0; i < 8; i++) this.addMob(i % 3 === 0 ? 'ranged' : 'melee', 1100 + (i % 4) * 290, 1490 + Math.floor(i / 4) * 320, 'cratera');
-    this.addMob('boss', 2370, 1640, 'cratera');
+    for (const s of spawnPoints(this.random)) this.addMob(s.type, s.x, s.y, s.zone);
   }
   setInput(id, data) {
     const p = this.players.get(id); if (!p || !p.connected) return;

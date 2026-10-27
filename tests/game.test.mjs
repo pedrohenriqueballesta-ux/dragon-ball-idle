@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, CONFIG, statsFor, xpForLevel, bagWeight } from '../public/engine.mjs';
+import { Game, CONFIG, statsFor, xpForLevel, bagWeight } from '../public/shared/index.mjs';
 import { createGameServer } from '../server.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });

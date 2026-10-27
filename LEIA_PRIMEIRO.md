@@ -104,13 +104,24 @@ O protótipo tem apenas Goku e um mapa pequeno. Ainda não há contas de produç
 ## Estrutura do código
 
 - server.mjs: servidor HTTP, conexão de jogadores, transmissão de estado e salvamento.
-- public/engine.mjs: regras autoritativas, atributos, combate, regeneração, inventário e mundo.
-- public/game.mjs: interface, controles, desenho do mapa e sprites.
-- public/art.mjs e public/assets/: sprites, texturas e desenho do cenário.
-- public/view.mjs: zoom, câmera, mira no mapa e seleção de quadros de movimento.
+- public/shared/: regras autoritativas, compartilhadas pelo servidor e pelo navegador.
+  - config.mjs: mundo, zonas, obstáculos e números de balanceamento (ajustáveis).
+  - math.mjs: funções matemáticas puras (distância, normalização, etc.).
+  - characters.mjs: personagem jogável (Goku), progressão e inventário inicial.
+  - enemies.mjs: atributos dos inimigos e onde eles nascem no mapa.
+  - game.mjs: a classe Game — combate, movimento, inventário e tick do mundo.
+  - index.mjs: ponto de entrada que reúne o que o servidor e o cliente importam.
+- public/client/game.mjs: interface, controles, desenho do mapa e sprites de reserva.
+- public/art/: desenho separado por assunto (terrain, goku, saibaman, alien, atlas, assets) + index.mjs.
+- public/render/camera.mjs: zoom, câmera, mira no mapa e seleção de quadros de movimento.
+- public/assets/: sprites e texturas em PNG.
 - public/style.css: apresentação e adaptação para telas pequenas.
 - tests/game.test.mjs: testes das regras e de duas conexões reais.
+- tests/view.test.mjs: testes da câmera e dos quadros de animação.
 - docs/CONCEITO.md: cópia das decisões do projeto no momento desta entrega.
+
+Regra importante: como o projeto não usa empacotador, o navegador carrega os módulos
+direto pela URL. Por isso todo código compartilhado fica dentro de public/.
 
 As tecnologias Phaser + TypeScript e Colyseus foram recomendações iniciais. Para entregar um teste local sem instalação de bibliotecas, esta versão usa Canvas 2D e Node.js com módulos JavaScript. O código de regras está separado da apresentação para permitir uma migração futura se ela se mostrar útil.
 

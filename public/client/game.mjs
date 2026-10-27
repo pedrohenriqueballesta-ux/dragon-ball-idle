@@ -1,6 +1,6 @@
-import { CONFIG, ZONES, OBSTACLES, MERCHANT, zoneAt } from './engine.mjs';
-import { CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku } from './art.mjs';
-import { clampZoom, zoomFromWheel, cameraView, worldFromPointer } from './view.mjs';
+import { CONFIG, ZONES, OBSTACLES, MERCHANT, zoneAt } from '../shared/index.mjs';
+import { CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku } from '../art/index.mjs';
+import { clampZoom, zoomFromWheel, cameraView, worldFromPointer } from '../render/camera.mjs';
 
 const $ = id => document.getElementById(id);
 const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap'), mctx = mini.getContext('2d');

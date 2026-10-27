@@ -1,4 +1,4 @@
-// Camera and animation helpers do not change any server-authoritative rules.
+// Câmera e helpers de animação. Não alteram nenhuma regra autoritativa do servidor.
 export const MIN_ZOOM = 0.65;
 export const MAX_ZOOM = 2;
 export function clampZoom(value) {

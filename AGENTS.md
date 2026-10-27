@@ -11,12 +11,15 @@ Este é um protótipo local de RPG idle de Dragon Ball em 2D visto de cima.
 
 ## Arquitetura
 
-- public/engine.mjs é a simulação autoritativa compartilhada, executada pelo servidor.
+- public/shared/ é a simulação autoritativa compartilhada, executada pelo servidor.
+  - config.mjs (mundo e números), math.mjs (helpers), characters.mjs (Goku/progressão),
+    enemies.mjs (inimigos), game.mjs (classe Game) e index.mjs (ponto de entrada).
 - server.mjs recebe intenções, valida sessões e transmite o estado.
-- public/game.mjs apresenta o estado e recebe controles; o navegador não decide XP, dano, estoque ou recargas.
-- public/art.mjs e public/view.mjs cuidam, respectivamente, das artes e da câmera, sem alterar as regras do servidor.
+- public/client/game.mjs apresenta o estado e recebe controles; o navegador não decide XP, dano, estoque ou recargas.
+- public/art/ (por assunto) e public/render/camera.mjs cuidam, respectivamente, das artes e da câmera, sem alterar as regras do servidor.
 - public/style.css cuida de desktop e telas pequenas.
 - data/save.json é estado local de execução e fica fora das entregas de código.
+- Sem empacotador: o navegador carrega os módulos pela URL, então o código compartilhado fica dentro de public/.
 
 ## Decisões que devem ser preservadas
 
