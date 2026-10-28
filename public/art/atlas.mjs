@@ -9,6 +9,7 @@ import { GOKU_PASSO } from './goku-passo.mjs';
 import { SSJ_PASSO } from './ssj-passo.mjs';
 import { GOKU_GOLPE } from './goku-golpe.mjs';
 import { SSJ_GOLPE } from './ssj-golpe.mjs';
+import { SAIBAMAN_PASSO } from './saibaman-passo.mjs';
 
 // Five distinct views, with the three opposite views mirrored for consistent anatomy.
 // Back-diagonal views use a rear three-quarter drawing, never a side/front substitute.
@@ -41,9 +42,10 @@ const SHEET_VIEWS = [
   { row: 0, flip: false }, { row: 1, flip: true }, { row: 2, flip: true }, { row: 3, flip: true },
   { row: 4, flip: false }, { row: 3, flip: false }, { row: 2, flip: false }, { row: 1, flip: false }
 ];
-function passoFrame(travelled, stride, moving, sheet = GOKU_PASSO) {
+// phase desencontra os passos de mobs iguais, para não andarem todos no mesmo pé.
+function passoFrame(travelled, stride, moving, sheet = GOKU_PASSO, phase = 0) {
   if (!moving) return sheet.idleColumn;
-  return Math.floor(walkStep(travelled, stride) * sheet.columns / 16);
+  return Math.floor(walkStep(travelled, stride, phase) * sheet.columns / 16);
 }
 // Folhas desenhadas quadro a quadro (goku-passo, goku-golpe): mesmo desenho em todas as poses.
 export function drawSheet(ctx, sheet, image, pos, height, facing, column, bob = 0) {
@@ -59,16 +61,16 @@ export function drawSheet(ctx, sheet, image, pos, height, facing, column, bob = 
   ctx.restore(); return true;
 }
 // Goku base andando: quadros desenhados de verdade, em vez de pernas entortadas a partir de um desenho parado.
-// Personagens com caminhada desenhada; os demais ainda usam as pernas geradas pelo walk-rig.
-const PASSO = { goku: [GOKU_PASSO, 'gokuPasso'], ssj: [SSJ_PASSO, 'ssjPasso'] };
+// Personagens com caminhada desenhada (Goku, SSJ, Saibaman); os demais ainda usam as pernas do walk-rig.
+const PASSO = { goku: [GOKU_PASSO, 'gokuPasso'], ssj: [SSJ_PASSO, 'ssjPasso'], saibaman: [SAIBAMAN_PASSO, 'saibamanPasso'] };
 export const GOLPE = { goku: [GOKU_GOLPE, 'gokuGolpe'], ssj: [SSJ_GOLPE, 'ssjGolpe'] };
-function drawPasso(ctx, kind, pos, height, facing, moving, stride) {
+function drawPasso(ctx, kind, pos, height, facing, moving, stride, phase = 0) {
   const [sheet, key] = PASSO[kind];
-  const bob = moving ? walkBob(walkStep(pos.travelled || 0, stride)) * height : 0;
-  return drawSheet(ctx, sheet, art[key], pos, height, facing, passoFrame(pos.travelled || 0, stride, moving, sheet), bob);
+  const bob = moving ? walkBob(walkStep(pos.travelled || 0, stride, phase)) * height : 0;
+  return drawSheet(ctx, sheet, art[key], pos, height, facing, passoFrame(pos.travelled || 0, stride, moving, sheet, phase), bob);
 }
 export function drawWalk(ctx, kind, pos, height, facing, moving, stride = 96, phase = 0) {
-  if (PASSO[kind] && drawPasso(ctx, kind, pos, height, facing, moving, stride)) return true;
+  if (PASSO[kind] && drawPasso(ctx, kind, pos, height, facing, moving, stride, phase)) return true;
   if (!moving) return drawAtlas(ctx, kind + 'Walk', pos, height, facing, 0);
   const direction = spriteFacing(facing), diagonal = direction % 2 === 1;
   const key = kind + (diagonal ? 'DiagonalWalk' : 'Walk');
