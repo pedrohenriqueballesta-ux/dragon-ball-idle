@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, PLANETS } from '../public/shared/index.mjs';
-import { podeAndar } from '../public/shared/passagem.mjs';
+import { podeAndar, emTerra } from '../public/shared/passagem.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });
 
@@ -41,4 +41,35 @@ test('regiões e mobs de Namekusei ficam em terra firme, e o mercador na Vila', 
   assert.ok(MERCHANT.x > vila.x && MERCHANT.x < vila.x + vila.w && MERCHANT.y > vila.y && MERCHANT.y < vila.y + vila.h, 'mercador dentro da Vila');
   const { x, y } = PLANETS.namek.spawn;
   assert.ok(x > vila.x && x < vila.x + vila.w && y > vila.y && y < vila.y + vila.h, 'chegada dentro da Vila (segura)');
+});
+
+test('casas da Vila bloqueiam pela base, ficam em terra e não tapam a chegada nem o mercador', async () => {
+  const { HOUSES, MERCHANT } = await import('../public/shared/config.mjs');
+  assert.ok(HOUSES.length >= 4);
+  for (const c of HOUSES) {
+    assert.equal(podeAndar('namek', c.x, c.y - c.w * 0.15), false, 'meio da base da casa ' + c.sprite + ' bloqueia');
+    assert.equal(podeAndar('namek', c.x, c.y + 20), true, 'frente da porta da casa ' + c.sprite + ' fica livre');
+  }
+  const { x, y } = PLANETS.namek.spawn;
+  assert.equal(podeAndar('namek', x, y), true);
+  assert.equal(podeAndar('namek', MERCHANT.x, MERCHANT.y), true);
+});
+
+test('casas da Vila ficam em solo firme, longe da beira da água', async () => {
+  const { HOUSES } = await import('../public/shared/config.mjs');
+  for (const c of HOUSES) for (let dx = -c.w * 0.6; dx <= c.w * 0.6; dx += 20) for (const dy of [-c.w * 0.5, 0, c.w * 0.3])
+    assert.ok(emTerra('namek', c.x + dx, c.y + dy), 'casa ' + c.sprite + ' perto da água em ' + Math.round(dx) + ',' + Math.round(dy));
+});
+
+test('casas destruídas ficam no Campo de Batalha, em terra, longe do chefe', async () => {
+  const { HOUSES, ZONES } = await import('../public/shared/config.mjs');
+  const campo = ZONES.find(z => z.id === 'cratera'), ruinas = HOUSES.filter(c => c.ruina);
+  assert.equal(ruinas.length, 6);
+  const game = new Game({ now: 1000, random: () => 0.5 }), chefe = [...game.mobs.values()].find(m => m.type === 'boss');
+  for (const c of ruinas) {
+    assert.ok(c.x > campo.x && c.x < campo.x + campo.w && c.y > campo.y && c.y < campo.y + campo.h, 'ruína ' + c.sprite + ' fora do Campo de Batalha');
+    assert.ok(emTerra('namek', c.x, c.y));
+    assert.ok(Math.hypot(c.x - chefe.x, c.y - chefe.y) > c.w / 2 + 200, 'ruína ' + c.sprite + ' em cima do chefe');
+  }
+  for (const m of game.mobs.values()) assert.equal(podeAndar('namek', m.x, m.y), true, m.name + ' nasceu dentro de uma casa');
 });

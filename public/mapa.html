@@ -20,9 +20,9 @@
   </header>
   <canvas id="mapa"></canvas>
   <script type="module">
-    import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS } from './shared/index.mjs';
+    import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, HOUSES } from './shared/index.mjs';
     import { podeAndar } from './shared/passagem.mjs';
-    import { art, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor } from './art/index.mjs';
+    import { art, drawTerrain, drawGroundImage, drawMarket, drawHouse, drawHouseGround, drawTree, drawRock, drawVendor } from './art/index.mjs';
     const canvas = document.getElementById('mapa'), ctx = canvas.getContext('2d');
     // .flat(): algumas entradas de art são listas de quadros (ex.: freezaFrames).
     const imagens = Object.values(art).flat(); let prontas = 0;
@@ -34,9 +34,10 @@
       ctx.imageSmoothingEnabled = false;
       ctx.save(); ctx.scale(escala, escala);
       const cam = { x: 0, y: 0, scale: escala };
-      if (drawGroundImage(ctx, art.namekSolo, PLANETS.namek, cam, canvas.width, canvas.height)) drawMarket(ctx, MERCHANT);
+      if (drawGroundImage(ctx, art.namekSolo, PLANETS.namek, cam, canvas.width, canvas.height)) { for (const c of HOUSES) drawHouseGround(ctx, c); drawMarket(ctx, MERCHANT); }
       else drawTerrain(ctx, CONFIG, ZONES, MERCHANT, cam, canvas.width, canvas.height);
       for (const o of [...OBSTACLES].sort((a, b) => a.y - b.y)) (o.type === 'tree' ? drawTree : drawRock)(ctx, o);
+      for (const c of [...HOUSES].sort((a, b) => a.y - b.y)) drawHouse(ctx, c);
       drawVendor(ctx, MERCHANT);
       if (document.getElementById('verPassagem').checked) {
         // Uma amostra a cada 12 unidades do mundo: rápido e suficiente para conferir.

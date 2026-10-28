@@ -1,5 +1,5 @@
-import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, zoneAt } from '../shared/index.mjs';
-import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
+import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, HOUSES, zoneAt } from '../shared/index.mjs';
+import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawHouse, drawHouseGround, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
 import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
 const $ = id => document.getElementById(id);
@@ -376,7 +376,7 @@ function frame(now) {
   camera = cameraView(position, width, height, zoom, world.w, world.h);
   ctx.save(); ctx.scale(camera.scale, camera.scale); ctx.translate(-camera.x, -camera.y);
   if (onNamek) {
-    if (drawGroundImage(ctx, art.namekSolo, world, camera, width, height)) drawMarket(ctx, MERCHANT);
+    if (drawGroundImage(ctx, art.namekSolo, world, camera, width, height)) { for (const c of HOUSES) drawHouseGround(ctx, c); drawMarket(ctx, MERCHANT); }
     else drawTerrain(ctx, CONFIG, ZONES, MERCHANT, camera, width, height);
     telegraphs(time);
     for (const l of snapshot.loot) { shadow(l.x, l.y, 7); ctx.fillStyle = l.item.startsWith('seed') ? '#a4cf72' : l.item === 'crystal' ? '#83d2d3' : '#d7c8a3'; ctx.fillRect(l.x - 5, l.y - 6 + Math.sin(time * 3) * 2, 10, 9); ctx.fillStyle = '#edf3c1'; ctx.fillRect(l.x - 2, l.y - 8, 4, 3); }
@@ -388,10 +388,12 @@ function frame(now) {
   const drawables = [
     ...(onNamek ? OBSTACLES.map(o => ({ y: o.y, draw: () => { if (o.type === 'tree') { shadow(o.x, o.y, o.r); if (!drawTree(ctx, o)) ctx.drawImage(sprites.tree, o.x - 61, o.y - 116, 122, 130); } else if (!drawRock(ctx, o)) { shadow(o.x, o.y, o.r); ctx.drawImage(sprites.rock, o.x - o.r, o.y - o.r * 1.15, o.r * 2, o.r * 1.7); } } })) : []),
     ...(onNamek ? [{ y: MERCHANT.y, draw: () => drawVendor(ctx, MERCHANT) }] : []),
+    // Casas entram na ordem de profundidade pela base: quem está acima da base passa por trás.
+    ...(onNamek ? HOUSES.map(c => ({ y: c.y, draw: () => drawHouse(ctx, c) })) : []),
     ...snapshot.players.map(p => ({ y: renderPositions.get(p.id).y, draw: () => drawPlayer(p, renderPositions.get(p.id), time) })),
     ...snapshot.mobs.map(m => ({ y: renderPositions.get(m.id).y, draw: () => drawMob(m, renderPositions.get(m.id), time) }))
   ].sort((a, b) => a.y - b.y);
-  for (const d of drawables) if (d.y > camera.y - 150 && d.y < camera.y + height / camera.scale + 150) d.draw();
+  for (const d of drawables) if (d.y > camera.y - 150 && d.y < camera.y + height / camera.scale + 350) d.draw();
   for (const s of snapshot.projectiles) {
     const px = s.x + s.dx * s.speed * Math.min(0.07, (now - receivedAt) / 1000), py = s.y + s.dy * s.speed * Math.min(0.07, (now - receivedAt) / 1000);
     if (s.kind === 'genki') { ctx.save(); const glow = ctx.createRadialGradient(px, py, 3, px, py, 29); glow.addColorStop(0, '#ffffff'); glow.addColorStop(.28, '#c4f7ff'); glow.addColorStop(.7, '#5cbbff'); glow.addColorStop(1, '#a152ff00'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px, py, 29, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
