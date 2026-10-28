@@ -5,7 +5,12 @@
 // regiões, casas, mercador, chegada, pontos de nascimento dos mobs e a máscara de passagem.
 // NÃO amplia personagens, velocidades, alcances, tempos nem distâncias de interação.
 // As posições abaixo continuam em px da imagem (as mesmas das ferramentas) e passam por `naEscala`.
-export const ESCALA_MUNDO = 2;
+export const ESCALA_MUNDO = 1.8;
+// Tamanho das casas e ruínas em relação ao desenho original (px da imagem). Fica separado da
+// escala do mundo: a proporção casa × personagem foi aprovada com 2 e não muda quando o mapa
+// encurta ou alonga. Mudou um dos dois? Gere o solo de novo (assentar_casas.py) com a largura
+// das casas em px da imagem = w × ESCALA_CONSTRUCOES ÷ ESCALA_MUNDO, para o terreiro acompanhar.
+export const ESCALA_CONSTRUCOES = 2;
 export const SOLO_NAMEK = Object.freeze({ w: 4608, h: 3072 });
 export const naEscala = v => v * ESCALA_MUNDO;
 
@@ -42,8 +47,8 @@ export function zoneAt(x, y) {
 // Cada uma fica num terreiro de terra batida pintado no próprio solo.webp por
 // ~/idle-dbz/ferramentas/assentar_casas.py: ao mudar posição ou tamanho aqui, gere o solo de novo.
 // x, y = centro da base da casa no chão; w = largura desenhada (a altura segue a proporção do sprite).
-// Em px da imagem: a casa cresce com o mapa, junto com o terreiro pintado no solo. Com
-// ESCALA_MUNDO = 2 o vão das portas fica entre 1,0 e 1,1 vez a altura do Goku (70).
+// x, y em px da imagem (acompanham o mapa); w em px do desenho original, ampliado por
+// ESCALA_CONSTRUCOES: com 2, o vão das portas fica entre 1,0 e 1,1 vez a altura do Goku (70).
 export const HOUSES = [
   { sprite: 2, x: 525, y: 1615, w: 190 },
   { sprite: 4, x: 285, y: 1405, w: 150 },
@@ -56,10 +61,10 @@ export const HOUSES = [
   { sprite: 6, x: 2980, y: 2510, w: 290, ruina: true },
   { sprite: 4, x: 3400, y: 2650, w: 150, ruina: true },
   { sprite: 2, x: 3700, y: 2370, w: 190, ruina: true }
-].map(c => ({ ...c, x: naEscala(c.x), y: naEscala(c.y), w: naEscala(c.w) }));
+].map(c => ({ ...c, x: naEscala(c.x), y: naEscala(c.y), w: c.w * ESCALA_CONSTRUCOES }));
 // A parte da casa que ocupa o chão: um retângulo raso na base, recuado nas laterais.
 export function casaBloqueia(x, y) {
-  return HOUSES.some(c => Math.abs(x - c.x) < c.w * 0.42 && y < c.y - naEscala(6) && y > c.y - c.w * 0.32);
+  return HOUSES.some(c => Math.abs(x - c.x) < c.w * 0.42 && y < c.y - 6 * ESCALA_CONSTRUCOES && y > c.y - c.w * 0.32);
 }
 // Planetas (instâncias). 'terra' é o spawn verde pequeno e seguro (tela inicial);
 // 'namek' é o mundo atual com zonas, inimigos e combate. Só se troca de planeta por TP.
