@@ -7,7 +7,7 @@ const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap'), m
 const keys = new Set(), renderPositions = new Map(), seenEvents = new Set();
 let snapshot = null, session = '', playerId = '', eventSource = null, receivedAt = 0, width = 900, height = 600, ratio = 1;
 let camera = { x: 0, y: 0, scale: 1 }, zoom = 1, pointerAim = null, touchVector = { x: 0, y: 0 }, lastUI = 0, sendingInput = false;
-let floating = [], lastFrame = performance.now(), connectionError = false;
+let floating = [], lastFrame = performance.now(), connectionError = false, miniTick = 0;
 const integer = v => Math.round(v).toLocaleString('pt-BR');
 const clock = seconds => { const n = Math.max(0, Math.ceil(seconds)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const itemNames = { food: 'Presunto', ki: 'Poção de Ki', seed15: 'Semente 15%', seed30: 'Semente 30%', seed50: 'Semente 50%', seed100: 'Semente 100%' };
@@ -255,7 +255,7 @@ const sprites = { goku: gokuSprite(), gokuBack: gokuSprite(false, true), ssj: go
   rock: sprite(c => { c.fillStyle = '#3c4140'; c.fillRect(2, 9, 27, 13); c.fillStyle = '#747971'; c.beginPath(); c.moveTo(0, 13); c.lineTo(7, 4); c.lineTo(23, 2); c.lineTo(32, 12); c.lineTo(27, 24); c.lineTo(7, 24); c.closePath(); c.fill(); c.fillStyle = '#96998a'; c.fillRect(7, 7, 13, 3); c.fillRect(5, 11, 4, 3); c.fillStyle = '#555f56'; c.fillRect(18, 16, 11, 6); }, 32, 26)
 };
 function resize() {
-  const r = canvas.getBoundingClientRect(); width = r.width; height = r.height; ratio = Math.min(devicePixelRatio || 1, 2);
+  const r = canvas.getBoundingClientRect(); width = r.width; height = r.height; ratio = 1;
   canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio); ctx.imageSmoothingEnabled = false;
 }
 new ResizeObserver(resize).observe(canvas);
@@ -346,6 +346,15 @@ function drawMinimap(onNamek = true, world = PLANETS.namek) {
   for (const p of snapshot.players) { mctx.fillStyle = p.id === playerId ? '#fff5b4' : '#80d6ea'; mctx.beginPath();mctx.arc(p.x*sx,p.y*sy,2.5,0,Math.PI*2);mctx.fill(); }
   mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
 }
+function predictLocal(x, y, dx, dy, dist, world, onNamek) {
+  const r = 15;
+  const ok = (nx, ny) => nx >= r && ny >= r && nx <= world.w - r && ny <= world.h - r && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - nx, o.y - ny) < o.r + r));
+  let ox = x, oy = y;
+  const nx = x + dx * dist, ny = y + dy * dist;
+  if (ok(nx, y)) ox = nx;
+  if (ok(ox, ny)) oy = ny;
+  return [ox, oy];
+}
 function frame(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height); ctx.imageSmoothingEnabled = false;
@@ -356,7 +365,13 @@ function frame(now) {
   const onNamek = snapshot.planet === 'namek';
   const world = PLANETS[snapshot.planet] || PLANETS.namek;
   const self = snapshot.players.find(p => p.id === playerId);
-  for (const entity of [...snapshot.players, ...snapshot.mobs]) screenPosition(entity, dt);
+  for (const entity of [...snapshot.players, ...snapshot.mobs]) {
+    if (entity.id === playerId && !entity.dead && !entity.dashing && !entity.charge) {
+      const iv = inputVector(); let px = entity.x, py = entity.y;
+      if (iv.x || iv.y) { const el = Math.min(0.2, (now - receivedAt) / 1000); [px, py] = predictLocal(entity.x, entity.y, iv.x, iv.y, (snapshot.self?.stats.mobility || 175) * el, world, onNamek); }
+      screenPosition({ ...entity, x: px, y: py }, dt);
+    } else screenPosition(entity, dt);
+  }
   const position = self ? renderPositions.get(self.id) : { x: world.w / 2, y: world.h / 2 };
   camera = cameraView(position, width, height, zoom, world.w, world.h);
   ctx.save(); ctx.scale(camera.scale, camera.scale); ctx.translate(-camera.x, -camera.y);
@@ -384,7 +399,7 @@ function frame(now) {
     if (s.kind === 'genki') { ctx.save(); const glow = ctx.createRadialGradient(px, py, 3, px, py, 29); glow.addColorStop(0, '#ffffff'); glow.addColorStop(.28, '#c4f7ff'); glow.addColorStop(.7, '#5cbbff'); glow.addColorStop(1, '#a152ff00'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px, py, 29, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     else { ctx.strokeStyle = s.ownerType === 'player' ? '#b7edff' : '#f3ba8d'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px - s.dx * 12, py - s.dy * 12); ctx.lineTo(px, py); ctx.stroke(); ctx.lineCap = 'butt'; }
   }
-  effects(time); ctx.restore(); drawMinimap(onNamek, world); requestAnimationFrame(frame);
+  effects(time); ctx.restore(); if (++miniTick % 4 === 0) drawMinimap(onNamek, world); requestAnimationFrame(frame);
 }
 resize(); requestAnimationFrame(frame);
 const previousToken = sessionStorage.getItem('dbi-session') || localStorage.getItem('dbi-last-session');

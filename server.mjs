@@ -91,16 +91,24 @@ export async function createGameServer({ port = 3000, host = '127.0.0.1', dataDi
     } catch (e) { if (!res.headersSent) json(res, 400, { error: e.message || 'Requisição inválida.' }); else res.end(); }
   });
   server.requestTimeout = 15000;
-  let broadcastCounter = 0;
-  const timer = setInterval(() => {
+  // Loop auto-corrigido: avança o jogo com o tempo real decorrido (evita a câmera lenta
+  // causada pela granularidade do timer do Windows) e transmite o estado a ~20 Hz.
+  let lastTick = Date.now(), lastBroadcast = 0;
+  const tickLoop = () => {
     if (closing) return;
-    game.tick(0.05);
-    if (++broadcastCounter % 2 === 0) for (const [token, connections] of streams) {
-      if (!connections.size) continue;
-      const p = sessions.get(token), payload = 'data: ' + JSON.stringify(game.snapshot(p.id)) + '\n\n';
-      for (const response of connections) if (!response.destroyed) response.write(payload);
+    const now = Date.now();
+    game.tick((now - lastTick) / 1000); lastTick = now;
+    if (now - lastBroadcast >= 50) {
+      lastBroadcast = now;
+      for (const [token, connections] of streams) {
+        if (!connections.size) continue;
+        const p = sessions.get(token), payload = 'data: ' + JSON.stringify(game.snapshot(p.id)) + '\n\n';
+        for (const response of connections) if (!response.destroyed) response.write(payload);
+      }
     }
-  }, 50);
+    timer = setTimeout(tickLoop, 16);
+  };
+  let timer = setTimeout(tickLoop, 16);
   const saveTimer = setInterval(save, 5000);
   await new Promise((ok, fail) => { server.once('error', fail); server.listen(port, host, ok); });
   const close = async () => {
