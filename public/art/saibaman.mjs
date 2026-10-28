@@ -1,9 +1,15 @@
-// Desenho do Saibaman (inimigo corpo a corpo), com caminhada e ataque de 16 quadros.
+// Desenho do Saibaman (inimigo corpo a corpo): caminhada e ataque desenhados quadro a quadro,
+// com as folhas de 16 quadros como reserva.
 import { art, loaded } from './assets.mjs';
-import { drawWalk, drawAttack } from './atlas.mjs';
+import { drawWalk, drawAttack, drawSheet, GOLPE } from './atlas.mjs';
+import { strikeColumn } from '../render/camera.mjs';
 
 export function drawSaibaman(ctx, x, y, size, height, time, moving, facing, phase, attackProgress = null, travelled = 0) {
   const pos = { x, y, travelled };
+  // mobStrikeProgress: 0–0,5 durante o aviso vermelho e 0,5 no dano, então o quadro de impacto
+  // (coluna 2) aparece no instante em que o golpe acerta.
+  const [sheet, key] = GOLPE.saibaman;
+  if (attackProgress !== null && drawSheet(ctx, sheet, art[key], pos, height, facing, strikeColumn(attackProgress))) return true;
   if (attackProgress !== null && drawAttack(ctx, 'saibaman', pos, height, facing, attackProgress)) return true;
   if (drawWalk(ctx, 'saibaman', pos, height, facing, moving, 80, phase)) return true;
   if (!loaded(art.saibaman)) return false;

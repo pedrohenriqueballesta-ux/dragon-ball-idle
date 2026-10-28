@@ -10,6 +10,7 @@ import { SSJ_PASSO } from './ssj-passo.mjs';
 import { GOKU_GOLPE } from './goku-golpe.mjs';
 import { SSJ_GOLPE } from './ssj-golpe.mjs';
 import { SAIBAMAN_PASSO } from './saibaman-passo.mjs';
+import { SAIBAMAN_GOLPE } from './saibaman-golpe.mjs';
 
 // Five distinct views, with the three opposite views mirrored for consistent anatomy.
 // Back-diagonal views use a rear three-quarter drawing, never a side/front substitute.
@@ -63,7 +64,7 @@ export function drawSheet(ctx, sheet, image, pos, height, facing, column, bob = 
 // Goku base andando: quadros desenhados de verdade, em vez de pernas entortadas a partir de um desenho parado.
 // Personagens com caminhada desenhada (Goku, SSJ, Saibaman); os demais ainda usam as pernas do walk-rig.
 const PASSO = { goku: [GOKU_PASSO, 'gokuPasso'], ssj: [SSJ_PASSO, 'ssjPasso'], saibaman: [SAIBAMAN_PASSO, 'saibamanPasso'] };
-export const GOLPE = { goku: [GOKU_GOLPE, 'gokuGolpe'], ssj: [SSJ_GOLPE, 'ssjGolpe'] };
+export const GOLPE = { goku: [GOKU_GOLPE, 'gokuGolpe'], ssj: [SSJ_GOLPE, 'ssjGolpe'], saibaman: [SAIBAMAN_GOLPE, 'saibamanGolpe'] };
 function drawPasso(ctx, kind, pos, height, facing, moving, stride, phase = 0) {
   const [sheet, key] = PASSO[kind];
   const bob = moving ? walkBob(walkStep(pos.travelled || 0, stride, phase)) * height : 0;
