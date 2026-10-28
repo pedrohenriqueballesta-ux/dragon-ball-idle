@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, CONFIG, PLANETS, statsFor, xpForLevel, bagWeight } from '../public/shared/index.mjs';
+import { Game, CONFIG, PLANETS, ZONES, statsFor, xpForLevel, bagWeight } from '../public/shared/index.mjs';
 import { createGameServer } from '../server.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });
@@ -49,16 +49,18 @@ test('subir de nível aumenta todos os atributos automaticamente e libera técni
 test('PvP é recusado fora da região e permitido com os dois jogadores na área PvP', () => {
   const game = world(), a = game.addPlayer('a'), b = game.addPlayer('b');
   assert.equal(game.hit(a, b, 30), false); assert.equal(b.hp, b.stats.hp);
-  // Planalto da Nave do Freeza (arena PvP) começa em x = 3450.
-  a.planet = b.planet = 'namek'; a.x = 3600; a.y = 1200; b.x = 3640; b.y = 1200;
+  // Planalto da Nave do Freeza (arena PvP): jogadores logo depois da borda esquerda, depois um fora dela.
+  const arena = ZONES.find(z => z.pvp), y = arena.y + arena.h / 2;
+  a.planet = b.planet = 'namek'; a.x = arena.x + 150; a.y = y; b.x = arena.x + 190; b.y = y;
   assert.equal(game.hit(a, b, 30), true); assert.ok(b.hp < b.stats.hp);
-  b.x = 3400; const hp = b.hp;
+  b.x = arena.x - 50; const hp = b.hp;
   assert.equal(game.hit(a, b, 30), false); assert.equal(b.hp, hp);
 });
 
 test('Kamehameha atravessando a fronteira não causa dano em jogador fora da área PvP', () => {
   const game = world(), a = game.addPlayer('a', 'Goku', { level: 3 }), b = game.addPlayer('b');
-  a.planet = b.planet = 'namek'; a.x = 3500; a.y = 1200; b.x = 3400; b.y = 1200; a.aim = { x: b.x, y: b.y };
+  const arena = ZONES.find(z => z.pvp), y = arena.y + arena.h / 2;
+  a.planet = b.planet = 'namek'; a.x = arena.x + 50; a.y = y; b.x = arena.x - 50; b.y = y; a.aim = { x: b.x, y: b.y };
   assert.equal(game.cast(a, 'kame').ok, true);
   advance(game, 0.8); assert.equal(b.hp, b.stats.hp);
 });

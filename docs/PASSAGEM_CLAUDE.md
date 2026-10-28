@@ -302,7 +302,22 @@ A interpolação acumula distância realmente percorrida enquanto `moving`; tele
 
 Terreno usa texturas grass/earth, clareiras arredondadas e união suavizada em máscara de resolução4 com blur6px e limiar alpha128. Isso é visual; colisão continua em `OBSTACLES`. Árvores/pedras ordenadas por profundidade; pedra tem sombra de contato. Minimap acompanha entidades/câmera.
 
-Zoom65%..200%. Roda: `z'=clamp(z*exp(-deltaPixels*0.0012),0.65,2)`, linhas×16, páginas×600. Escala câmera=`(larguraTela<650?0.9:1.05)*zoom`; clique converte pela câmera e escala atuais.
+Escala do mundo de Namekusei (desde 28/10/2026; substitui as dimensões de mundo citadas acima): `ESCALA_MUNDO` e `ESCALA_CONSTRUCOES` em `public/shared/config.mjs`. **1 px da imagem do solo (4608×3072) vale `ESCALA_MUNDO` = 1,8 unidades**, então o mundo tem 8294×5530. Ela amplia terreno, regiões, chegada, posição do mercador, pontos de nascimento dos mobs, posição do chefe e a máscara de passagem. As posições continuam escritas em px da imagem (as mesmas das ferramentas) e passam por `naEscala`. **Não amplia** personagens (Goku 70), velocidades, alcances, tempos nem distâncias de interação. As casas e ruínas têm escala própria, `ESCALA_CONSTRUCOES` = 2 sobre o desenho original: o vão das portas fica com 1,0–1,1 vez a altura do Goku. Mudou uma das duas escalas? Gere o solo de novo com `~/idle-dbz/ferramentas/assentar_casas.py`, com a largura das casas em px da imagem = w × ESCALA_CONSTRUCOES ÷ ESCALA_MUNDO, para terreiro e contato acompanharem. O save não guarda posição (o jogador sempre começa na Terra), então mudar a escala não exige migração.
+
+**DECIDIDO (Pedro, 28/10):** mundo ampliado com personagens do mesmo tamanho; testado 2× e escolhido **1,8×**; casas na proporção aprovada no teste de 2×. Medido com o Goku nível 1 (velocidade 175): praça da Vila → entrada das Planícies 4,6 s (1×) → 8,2 s (1,8×); → centro das Planícies 10,6 s → 18,9 s. **Efeito conhecido, em aberto:** os mesmos 16 mobs nas Planícies ficam mais espalhados; em 10 min de caça automática a partir do nível 1, 277 mortes e nível 11 (1×) contra 108 e nível 7 (1,8×). Decidir se a quantidade de mobs aumenta.
+
+Câmera e zoom (desde 28/10/2026): todos os valores ficam em `CAMERA`, em `public/render/camera.mjs`; para calibrar, mexer só ali. Zoom de 80% a 200%, padrão 100%. Roda: `z'=clamp(z*exp(-deltaPixels*0.0012),0.8,2)`, linhas×16, páginas×600; botões −/+ dividem/multiplicam por 1,2.
+
+O campo de visão é medido em **unidades do mundo**, não em pixels de tela: com zoom 100%, qualquer tela mostra a mesma área de mundo (1200×750 = 900 mil unidades²), com teto de 1300 no lado maior e piso de 600 no lado menor; o piso vence o teto. Escala = `min(max(√(largura·altura/900000), ladoMaior/1300), ladoMenor/600) * zoom`. Clique converte pela câmera e escala atuais.
+
+**DECIDIDO (Pedro, 28/10):** câmera mais próxima da ação e limitada: monitor grande não vê mais mapa que notebook, e o jogador descobre o cenário avançando nas hunts, sem ver uma região inteira afastando a câmera. **DECIDIDO:** piso de 600 no lado menor, para nenhum ataque vir de fora da tela (Sentinela ataca de 235, mob percebe a 300). Efeito aceito: celular e tablet passaram a ver um pouco mais de mapa do que na versão anterior. Os demais números (área 1200×750, teto 1300, zoom 0,8–2) são calibração provisória.
+
+| Tela | Zoom 100% | Zoom 80% (máximo afastamento) |
+|---|---|---|
+| Notebook 1366×768 | 1265×711 | 1582×889 |
+| Monitor 1920×1080 ou 2560×1440 | 1265×712 | 1581×889 (antes: até 3751×2110) |
+| Ultralargo 3440×1440 | 1433×600 | 1792×750 |
+| Celular em pé 390×844 | 601×1300 | 751×1625 |
 
 **Falta:** sequências próprias de16quadros para morte, esquiva, item, interação e habilidades especiais; demais personagens; arte exclusiva de chefe; polimento de alinhamento/consistência; integração de `idle-dbz-assets`. Não confundir efeitos de energia já desenhados no Canvas com sequência completa de16sprites para cada técnica.
 
