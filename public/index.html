@@ -76,7 +76,7 @@
         <div id="targetHud" class="target-hud hidden"><span id="targetName"></span><div class="resource enemy"><i id="targetBar"></i></div></div>
         <section class="hud-chat" aria-label="Chat do jogo">
           <nav><button class="active" type="button">Geral</button><button type="button">Sistema</button><button type="button">Grupo</button><button type="button">Clã</button></nav>
-          <div class="chat-lines"><p>[Geral] <b>VegetaBR:</b> bora missão?</p><p>[Geral] <b>Kakaroto:</b> alguém upando?</p><p>[Comércio] <b>Bulma:</b> vendo esfera do dragão</p><p>[Sistema] Você recebeu experiência.</p></div>
+          <div class="chat-lines" aria-live="polite"></div>
           <div class="chat-input"><input aria-label="Mensagem do chat" placeholder="Digite sua mensagem..."><button type="button" title="Enviar mensagem">➤</button></div>
         </section>
         <div class="world-bottom"><div id="foodBuff" class="buff">Comida inativa · F para comer</div><div class="hunt-controls"><div id="huntStatus" class="hunt-status">Exploração manual</div><button id="quickHunt" class="quick-hunt" title="Iniciar ou pausar a caça automática">▶ Caça · H</button></div></div>
@@ -136,17 +136,26 @@
       card?.classList.toggle('missions-compact');
       event.currentTarget.textContent = card?.classList.contains('missions-compact') ? 'Expandir' : 'Ver Todas';
     });
-    document.querySelectorAll('.hud-chat nav button').forEach((button) => {
+    const chatChannels = { geral: [], sistema: [], grupo: [], clans: [] };
+    let activeChatChannel = 'geral';
+    const renderChatChannel = () => {
+      const lines = document.querySelector('.chat-lines');
+      if (lines) lines.replaceChildren(...chatChannels[activeChatChannel]);
+    };
+    document.querySelectorAll('.hud-chat nav button').forEach((button, index) => {
+      button.dataset.chatChannel = ['geral', 'sistema', 'grupo', 'clans'][index];
       button.addEventListener('click', () => {
+        activeChatChannel = button.dataset.chatChannel;
         button.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === button));
+        renderChatChannel();
       });
-    });
-    document.querySelector('.chat-input button')?.addEventListener('click', () => {
+    });`r`n    document.querySelector('.chat-input button')?.addEventListener('click', () => {
       const input = document.querySelector('.chat-input input');
       if (input?.value.trim()) {
         const line = document.createElement('p');
-        line.textContent = '[Geral] Você: ' + input.value.trim();
-        document.querySelector('.chat-lines')?.append(line);
+        line.textContent = '[' + (activeChatChannel === 'clans' ? 'Clã' : activeChatChannel[0].toUpperCase() + activeChatChannel.slice(1)) + '] Você: ' + input.value.trim();
+        chatChannels[activeChatChannel].push(line);
+        renderChatChannel();
         input.value = '';
       }
     });
