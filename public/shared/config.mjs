@@ -1,6 +1,6 @@
 // Dados do mundo e números de balanceamento do protótipo. Todos ajustáveis.
 export const CONFIG = Object.freeze({
-  // Namekusei: 3x a imagem do solo (1536x1024 → 4608x3072), cerca de 2x a área do mapa antigo.
+  // Namekusei: 4608x3072, o tamanho da imagem do solo (assets/namek/solo.webp, 1 px = 1 unidade).
   width: 4608, height: 3072, foodDuration: 300, foodHealPerSecond: 2,
   seedCooldown: 20, kiCooldown: 8, pickupRadius: 60, respawnDelay: 4,
   seedPotencies: [15, 30, 50, 100],

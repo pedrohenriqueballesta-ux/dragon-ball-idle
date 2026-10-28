@@ -31,7 +31,7 @@ export const art = {
   sentinelaPasso: loadImage(SENTINELA_PASSO.file),
   gokuGolpe: loadImage(GOKU_GOLPE.file),
   ssjGolpe: loadImage(SSJ_GOLPE.file),
-  namekSolo: loadImage('/assets/namek/solo.png'),
+  namekSolo: loadImage('/assets/namek/solo.webp'),
   grass: loadImage('/assets/grass.png'),
   earth: loadImage('/assets/earth.png')
 };
