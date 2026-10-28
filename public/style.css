@@ -188,3 +188,226 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05101a}
 @media(max-width:1350px) and (min-width:1001px){.player-hud{transform:scale(.82);transform-origin:top left}.hud-currencies{left:53%;transform:translateX(-50%);gap:6px}.currency{width:170px;height:48px}.currency b{font-size:27px}.currency strong{font-size:16px}.currency em{font-size:22px;width:26px;height:26px}.region{right:59px;width:215px}.region>span{font-size:12px}.map-wrap{right:48px;top:53px;width:230px;height:230px}.map-wrap #minimap{width:230px;height:230px}.hud-edge-tools button{width:44px;height:44px;font-size:24px}.mission-card{top:298px;width:330px}.hud-nav{top:195px;transform:scale(.86);transform-origin:top left}.hud-chat{width:360px;height:220px}.world-frame .actionbar{width:min(610px,47vw);min-width:550px}.world-frame .skill{height:145px;min-height:145px}.skill-art{height:96px}.hud-shortcuts{transform:scale(.82);transform-origin:bottom right}}
 @media(max-width:1000px) and (min-width:761px){.player-hud{left:135px;top:8px;transform:scale(.68);transform-origin:top left}.hud-currencies{top:8px;left:48%;transform:translateX(-50%);gap:3px}.currency{width:130px;height:41px;padding:3px 6px}.currency b{font-size:22px}.currency strong{font-size:13px}.currency em{font-size:18px;width:23px;height:23px}.region{top:2px;right:48px;width:160px;padding:4px}.region>span{font-size:9px}.region small{font-size:8px;min-width:100px}.map-wrap{top:45px;right:43px;width:166px;height:166px}.map-wrap #minimap{width:166px;height:166px}.compass{width:21px;height:21px;font-size:9px}.hud-edge-tools{top:8px;right:7px;gap:3px}.hud-edge-tools button{width:33px;height:33px;font-size:18px}.hud-nav{top:150px;left:8px;width:160px}.hud-nav button{min-height:43px;font-size:14px}.mission-card{top:224px;right:8px;width:255px}.mission-card header{min-height:42px;font-size:16px}.mission-row{min-height:58px;padding:7px;font-size:11px}.mission-row small{font-size:9px}.hud-chat{display:none}.hud-shortcuts{display:none}.world-frame .actionbar{left:50%;bottom:16px;width:min(570px,68vw);min-width:0}.world-frame .skill{height:108px;min-height:108px;padding:5px}.skill-art{height:64px;font-size:38px}.world-frame .skill kbd{font-size:16px;min-width:25px}.world-frame .skill strong{font-size:10px}.world-frame .skill small{font-size:8px}.zoom-controls{left:175px;top:128px}}
 @media(max-width:760px){.player-hud{left:110px;top:4px;width:255px;height:80px;padding:4px 6px 4px 0;transform:none}.portrait{width:76px;height:76px;flex-basis:76px;margin-left:-68px;border-width:3px}.hud-details{padding-left:0}.hud-title{margin-bottom:2px}.hud-title strong{font-size:13px}.hud-title span{font-size:11px}.resource{height:13px;margin-top:3px}.resource span{font-size:8px;line-height:9px}.resource.experience{height:10px}.resource.experience span{font-size:7px;line-height:7px}.hud-currencies{top:91px;left:8px;transform:none;gap:3px}.currency{width:auto;min-width:78px;height:30px;padding:2px 5px;border-width:1px;border-radius:8px}.currency b{font-size:15px}.currency strong{font-size:9px}.currency em{width:17px;height:17px;font-size:13px;line-height:14px}.region{display:none}.map-wrap{top:8px;right:37px;width:94px;height:94px}.map-wrap #minimap{width:94px;height:94px;border-width:3px}.compass{width:17px;height:17px;font-size:7px}.compass.north{top:-8px}.compass.south{bottom:-8px}.compass.east{right:-8px}.compass.west{left:-8px}.hud-edge-tools{top:5px;right:4px;gap:2px}.hud-edge-tools button{width:27px;height:27px;border-radius:6px;border-width:1px;font-size:15px}.hud-nav{left:6px;top:123px;width:38px;gap:3px}.hud-nav button{justify-content:center;width:38px;min-height:34px;padding:3px;border-width:1px;border-radius:7px;font-size:17px}.hud-nav button span{display:none}.mission-card{top:119px;right:5px;width:min(188px,48vw);border-radius:8px}.mission-card header{min-height:34px;padding:4px 6px;font-size:12px}.mission-card header button{padding:3px 5px;font-size:8px}.mission-row{min-height:48px;padding:5px;gap:4px;font-size:9px}.mission-row>b{font-size:16px}.mission-row small{font-size:7px}.mission-row strong{font-size:8px}.hud-chat{display:none}.hud-shortcuts{display:none}.world-frame .actionbar{left:50%;bottom:7px;width:calc(100vw - 10px);min-width:0;gap:2px}.world-frame .skill{height:78px;min-height:78px;padding:3px 2px;border-width:1px;border-radius:7px;gap:2px}.skill-art{height:37px;font-size:27px;border-radius:5px}.world-frame .skill kbd{left:1px;top:1px;min-width:16px;padding:1px 3px;border-width:1px;border-radius:4px;font-size:10px}.world-frame .skill strong{font-size:7px}.world-frame .skill small{font-size:6px}.cooldown-overlay{font-size:13px}.zoom-controls{left:45px;top:122px;transform:scale(.75);transform-origin:top left}}
+
+/* Mantém as posições da referência em desktop e reflowa somente em telas menores. */
+@media (min-width: 1351px) and (max-height: 820px){
+  .hud-chat{left:16px;bottom:16px;width:340px;height:min(20dvh,180px)}
+  .world-frame .actionbar{left:50%;bottom:16px;width:min(750px,calc(100vw - 720px));min-width:540px}
+  .world-frame .skill{height:110px;min-height:110px;padding:6px}
+  .skill-art{height:68px;font-size:42px}
+  .world-frame .skill kbd{font-size:18px;min-width:28px}
+  .world-frame .skill strong{font-size:11px}
+  .world-frame .skill small{font-size:9px}
+  .hud-shortcuts{right:16px;bottom:16px}
+  .hud-shortcuts button{width:60px;height:78px;min-height:78px}
+  .hud-shortcuts b{font-size:27px}.hud-shortcuts span{font-size:9px}
+  .mission-card{width:330px}.mission-row{min-height:62px;padding:7px 10px}
+  .mission-card header{min-height:44px;padding:5px 10px}
+}
+@media (min-width: 1101px) and (max-width: 1350px){
+  .hud-currencies{left:59%;transform:translateX(-50%);gap:6px}
+  .currency{width:95px;height:42px;padding:3px 6px}
+  .currency b{font-size:22px}.currency strong{font-size:13px}.currency em{width:22px;height:22px;font-size:16px;line-height:19px}
+}
+@media (min-width: 1001px) and (max-width: 1100px){
+  .hud-currencies{left:65%;transform:translateX(-50%);gap:4px}
+  .currency{width:80px;height:40px;padding:3px 5px}
+  .currency b{font-size:20px}.currency strong{font-size:11px}.currency em{width:20px;height:20px;font-size:15px;line-height:17px}
+}
+@media (min-width: 1001px) and (max-width: 1350px){
+  .player-hud{transform:scale(.82);transform-origin:top left}
+  .region{right:59px;width:215px}
+  .map-wrap{right:48px;top:53px;width:230px;height:230px}
+  .map-wrap #minimap{width:230px;height:230px}
+  .hud-nav{left:12px;top:195px;width:196px;transform:scale(.76);transform-origin:top left}
+  .mission-card{right:12px;top:298px;width:clamp(250px,25vw,330px)}
+  .mission-card header{min-height:44px;padding:5px 9px;font-size:16px}
+  .mission-row{min-height:58px;padding:7px 9px;font-size:11px}
+  .mission-row small{font-size:9px}
+  .hud-chat{left:12px;bottom:12px;width:min(25vw,330px);height:min(24dvh,210px)}
+  .world-frame .actionbar{left:50%;bottom:12px;width:calc(50vw - 80px);min-width:0;gap:4px}
+  .world-frame .skill{height:clamp(96px,14dvh,130px);min-height:clamp(96px,14dvh,130px);padding:5px}
+  .skill-art{height:clamp(58px,9dvh,94px);font-size:clamp(34px,4vw,48px)}
+  .world-frame .skill kbd{font-size:clamp(14px,1.5vw,20px);min-width:24px}
+  .world-frame .skill strong{font-size:clamp(9px,1vw,12px)}
+  .world-frame .skill small{font-size:clamp(7px,.8vw,10px)}
+  .hud-shortcuts{right:12px;bottom:16px;transform:none}
+  .hud-shortcuts button{width:clamp(46px,4.4vw,60px);height:clamp(64px,10dvh,92px);min-height:clamp(64px,10dvh,92px)}
+  .hud-shortcuts b{font-size:clamp(20px,2vw,28px)}.hud-shortcuts span{font-size:clamp(7px,.8vw,10px)}
+}
+@media (min-width: 761px) and (max-width: 1000px){
+  .world-top{inset:8px 12px auto}
+  .player-hud{left:110px;top:0;width:250px;height:80px;min-height:0;padding:4px 6px 4px 0;gap:8px;transform:none}
+  .portrait{width:76px;height:76px;flex:0 0 76px;margin-left:-104px;transform:translateY(-4px);border-width:3px}
+  .hud-title{margin-bottom:2px}.hud-title strong{font-size:13px;max-width:145px}.hud-title span{font-size:11px;padding:2px 5px}
+  .resource{height:13px;margin-top:3px}.resource span{font-size:8px;line-height:9px}.resource.experience{height:10px}.resource.experience span{font-size:7px;line-height:7px}
+  .hud-currencies{left:50px;top:103px;transform:none;gap:4px}
+  .currency{width:80px;height:40px;min-width:0;padding:3px 5px}.currency b{font-size:20px}.currency strong{font-size:11px}.currency em{width:20px;height:20px;font-size:15px;line-height:17px}
+  .region{display:block;left:50px;right:auto;top:148px;width:min(340px,calc(100vw - 430px));min-width:0;padding:4px 8px}
+  .region strong{font-size:14px}.region small{min-width:0;padding:2px 6px;font-size:10px}
+  .map-wrap{top:45px;right:43px;width:166px;height:166px}.map-wrap #minimap{width:166px;height:166px}
+  .compass{width:21px;height:21px;font-size:9px}
+  .hud-edge-tools{top:8px;right:7px;gap:3px}.hud-edge-tools button{width:33px;height:33px;font-size:18px}
+  .hud-nav{left:6px;top:230px;width:38px;gap:3px}.hud-nav button{justify-content:center;width:38px;min-height:34px;padding:3px;border-width:1px;border-radius:7px;font-size:17px}.hud-nav button span{display:none}
+  .mission-card{top:224px;right:8px;width:clamp(220px,34vw,255px)}.mission-card header{min-height:38px;padding:4px 6px;font-size:14px}.mission-card header button{padding:4px 7px;font-size:10px}.mission-row{min-height:58px;padding:7px;gap:5px;font-size:10px}.mission-row>b{font-size:19px}.mission-row small{font-size:8px}
+  .hud-chat:not(.mobile-open){display:none}
+  .hud-chat.mobile-open{display:grid;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(448px,calc(100vw - 24px));height:min(300px,45dvh);z-index:20}
+  .hud-shortcuts{display:none}
+  .world-frame .actionbar{left:50%;bottom:clamp(8px,2dvh,16px);width:min(570px,68vw);min-width:0;gap:3px}
+  .world-frame .skill{height:clamp(78px,14dvh,108px);min-height:clamp(78px,14dvh,108px);padding:4px}
+  .skill-art{height:clamp(42px,8dvh,64px);font-size:clamp(26px,4vw,38px)}
+  .world-frame .skill kbd{left:2px;top:2px;min-width:21px;font-size:14px;padding:1px 4px}
+  .world-frame .skill strong{font-size:clamp(8px,1.2vw,10px)}.world-frame .skill small{font-size:clamp(6px,.9vw,8px)}
+  .zoom-controls{left:50px;top:212px;transform:none}
+}
+@media (max-width: 760px){
+  .world-top{inset:8px 12px auto}
+  .player-hud{left:clamp(80px,28vw,110px);top:0;width:min(255px,calc(100vw - 125px));height:80px;min-height:0;padding:4px 6px 4px 0;gap:8px;transform:none}
+  .portrait{width:clamp(64px,20vw,76px);height:clamp(64px,20vw,76px);flex:0 0 clamp(64px,20vw,76px);margin-left:-114px;transform:translateY(-4px);border-width:3px}
+  .hud-title{margin-bottom:2px}.hud-title strong{font-size:clamp(11px,3.2vw,13px);max-width:34vw}.hud-title span{font-size:10px;padding:2px 4px}
+  .resource{height:12px;margin-top:3px}.resource span{font-size:7px;line-height:8px}.resource.experience{height:9px}.resource.experience span{font-size:6px;line-height:6px}
+  .hud-currencies{left:50px;top:103px;transform:none;gap:4px}
+  .currency{width:min(78px,20vw);min-width:0;height:30px;padding:2px 4px;border-width:1px;border-radius:8px}.currency b{font-size:clamp(12px,4vw,15px)}.currency strong{font-size:clamp(8px,2.8vw,10px)}.currency em{width:17px;height:17px;font-size:12px;line-height:14px}
+  .region{display:none}
+  .map-wrap{top:8px;right:37px;width:clamp(86px,24vw,94px);height:clamp(86px,24vw,94px)}#minimap{width:100%;height:100%;border-width:3px}.compass{width:17px;height:17px;font-size:7px}.compass.north{top:-8px}.compass.south{bottom:-8px}.compass.east{right:-8px}.compass.west{left:-8px}
+  .hud-edge-tools{top:5px;right:4px;gap:2px}.hud-edge-tools button{width:27px;height:27px;border-width:1px;border-radius:6px;font-size:15px}
+  .hud-nav{left:6px;top:160px;width:38px;gap:3px}.hud-nav button{justify-content:center;width:38px;min-height:28px;padding:2px;border-width:1px;border-radius:7px;font-size:15px}.hud-nav button span{display:none}
+  .mission-card{top:157px;right:5px;width:min(188px,48vw);border-radius:8px;border-width:1px}.mission-card header{min-height:32px;padding:3px 5px;font-size:11px}.mission-card header button{padding:2px 4px;font-size:8px}.mission-row{min-height:44px;padding:4px;gap:4px;font-size:8px}.mission-row>b{font-size:15px}.mission-row strong{font-size:8px}.mission-row small{font-size:6px;margin-top:1px}
+  .hud-chat:not(.mobile-open){display:none}
+  .hud-chat.mobile-open{display:grid;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(448px,calc(100vw - 20px));height:min(280px,42dvh);z-index:20}
+  .hud-shortcuts{display:none}
+  .world-frame .actionbar{left:50%;bottom:6px;width:calc(100vw - 10px);min-width:0;gap:2px}.world-frame .skill{height:clamp(68px,11dvh,78px);min-height:clamp(68px,11dvh,78px);padding:3px 2px;border-width:1px;border-radius:7px;gap:2px}.skill-art{height:clamp(34px,6dvh,40px);font-size:clamp(24px,7vw,30px);border-radius:5px}.world-frame .skill kbd{left:1px;top:1px;min-width:16px;padding:1px 3px;border-width:1px;border-radius:4px;font-size:10px}.world-frame .skill strong{font-size:clamp(6px,2vw,8px);line-height:1}.world-frame .skill small{font-size:clamp(5px,1.7vw,7px);line-height:1}.cooldown-overlay{font-size:13px}
+  .zoom-controls{left:50px;top:210px;transform:scale(.8);transform-origin:top left}
+}
+@media (max-width: 760px) and (max-height: 520px){
+  .hud-nav{top:152px}.hud-nav button{min-height:25px}
+  .mission-card{top:150px}.mission-row{min-height:37px}
+  .zoom-controls{top:201px}
+}
+@media (max-width: 400px){.portrait{margin-left:calc(-28vw - 4px)}}
+@media (min-width: 1351px) and (max-width: 1500px){
+  .hud-currencies{left:60%;transform:translateX(-50%);gap:12px}.currency{width:112px}
+}
+@media (min-width: 1501px) and (max-width: 1590px){
+  .hud-currencies{left:59%;transform:translateX(-50%);gap:12px}.currency{width:150px}
+}
+@media (min-width: 1591px) and (max-width: 1670px){
+  .hud-currencies{left:59%;transform:translateX(-50%);gap:12px}.currency{width:180px}
+}
+@media (min-width: 1351px) and (max-width: 1639px){
+  .hud-chat{width:min(340px,25vw)}
+  .world-frame .actionbar{left:50%;width:min(710px,calc(100vw - 760px));min-width:550px}
+  .hud-shortcuts{right:16px;transform:none}
+  .hud-shortcuts button{width:clamp(56px,5vw,72px);height:clamp(80px,12dvh,110px);min-height:clamp(80px,12dvh,110px)}
+}
+@media (min-width: 761px) and (max-width: 1000px) and (max-height: 560px){
+  .mission-card header{min-height:32px;padding:3px 6px}
+  .mission-row{min-height:48px;padding:5px 7px}
+  .world-frame .actionbar{bottom:6px}
+  .world-frame .skill{height:clamp(64px,13dvh,88px);min-height:clamp(64px,13dvh,88px)}
+  .skill-art{height:clamp(34px,7dvh,48px);font-size:32px}
+}
+@media (min-width: 761px) and (max-width: 1000px) and (max-height: 440px){
+  .mission-card header{min-height:26px;padding:2px 5px}
+  .mission-row{min-height:22px;padding:2px 5px}
+  .mission-row small{display:none}
+  .world-frame .actionbar{bottom:4px}
+  .world-frame .skill{height:48px;min-height:48px;padding:2px}
+  .skill-art{height:20px;font-size:18px}
+  .world-frame .skill strong{font-size:8px}
+  .world-frame .skill small{display:none}
+}
+
+/* Avisos do jogo ficam fora das barras e dos dados do personagem. */
+.world-frame{--hud-action-height:176px;--hud-action-bottom:24px}
+.notifications{top:auto;bottom:calc(var(--hud-action-height) + var(--hud-action-bottom) + 12px);left:50%;transform:translateX(-50%);width:min(380px,calc(100vw - 32px));max-width:none;max-height:min(190px,calc(100dvh - 250px));overflow:hidden;z-index:12}
+@media (min-width: 1351px) and (max-height: 820px){.world-frame{--hud-action-height:110px;--hud-action-bottom:16px}}
+@media (min-width: 1001px) and (max-width: 1350px){.world-frame{--hud-action-height:clamp(96px,14dvh,130px);--hud-action-bottom:12px}}
+@media (min-width: 761px) and (max-width: 1000px){.world-frame{--hud-action-height:clamp(78px,14dvh,108px);--hud-action-bottom:clamp(8px,2dvh,16px)}}
+@media (max-width: 760px){.world-frame{--hud-action-height:clamp(68px,11dvh,78px);--hud-action-bottom:6px}.notifications>.toast:not(:last-child){display:none}}
+@media (min-width: 761px) and (max-width: 1000px) and (max-height: 560px){.world-frame{--hud-action-height:clamp(64px,13dvh,88px);--hud-action-bottom:6px}}
+@media (min-width: 761px) and (max-width: 1000px) and (max-height: 440px){.world-frame{--hud-action-height:48px;--hud-action-bottom:4px}}
+
+/* Acabamento da HUD seguindo a referência ilustrada. */
+.hud-symbols{position:absolute;width:0;height:0;overflow:hidden}
+.hud-icon{display:block;width:28px;height:28px;flex:0 0 28px;fill:currentColor;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px currentColor)}
+.currency-icon{width:34px;height:34px;flex-basis:34px}
+.currency.zeni .hud-icon{color:#ffd34e}.currency.crystal .hud-icon{color:#39d5ff}.currency.token .hud-icon{color:#ff5267}
+.hud-nav .hud-icon{width:30px;height:30px;flex-basis:30px;color:#36cfff}
+.hud-nav button:nth-child(2) .hud-icon,.hud-nav button:nth-child(3) .hud-icon,.hud-nav button:nth-child(7) .hud-icon{color:#ffc43e}
+.hud-edge-tools .hud-icon{width:31px;height:31px;flex-basis:31px;color:#dff8ff}
+.mission-heading-icon{width:29px;height:29px;vertical-align:middle;color:#ffcc24}
+.mission-icon{width:25px;height:25px;flex-basis:25px}
+.mission-row:not(.secondary) .mission-icon{color:#ffcb22}.mission-row.secondary .mission-icon{color:#20caff}
+.skill-svg{position:relative;z-index:1;display:block;width:100%;height:100%;filter:drop-shadow(0 0 5px currentColor)}
+.hud-shortcuts .hud-icon{width:42px;height:42px;flex-basis:42px}
+.hud-shortcuts button:nth-child(1) .hud-icon{color:#ffc83f}.hud-shortcuts #hudRadar .hud-icon{color:#55e76b}
+.hud-shortcuts #hudMap .hud-icon{color:#48cfff}.hud-shortcuts #hudTransform .hud-icon{color:#ffcf38}.hud-shortcuts #panelButtonBottom .hud-icon{color:#e4faff}
+.chat-input .hud-icon{width:24px;height:24px;flex-basis:24px;color:#55d7ff}
+@media (max-width:1350px){.hud-nav .hud-icon{width:24px;height:24px;flex-basis:24px}.hud-edge-tools .hud-icon{width:23px;height:23px;flex-basis:23px}.mission-heading-icon{width:22px;height:22px}.mission-icon{width:19px;height:19px;flex-basis:19px}}
+@media (max-width:760px){.currency-icon{width:23px;height:23px;flex-basis:23px}.hud-nav .hud-icon{width:20px;height:20px;flex-basis:20px}.hud-edge-tools .hud-icon{width:18px;height:18px;flex-basis:18px}.mission-heading-icon{width:17px;height:17px}.mission-icon{width:15px;height:15px;flex-basis:15px}}
+
+/* Separa placa da região, minimapa e cartão de missões no canto superior direito. */
+@media (min-width: 1351px){
+  .region{top:3px;right:64px;width:clamp(220px,14vw,255px)}
+  .map-wrap{top:96px;right:68px;width:clamp(190px,14vw,250px);height:clamp(190px,14vw,250px)}
+  .map-wrap #minimap{width:100%;height:100%}
+  .mission-card{top:clamp(350px,calc(96px + min(14vw,250px) + 58px),420px);right:12px;width:clamp(290px,21vw,380px)}
+}
+@media (min-width: 1001px) and (max-width: 1350px){
+  .map-wrap{top:82px;width:clamp(170px,16vw,210px);height:clamp(170px,16vw,210px)}
+  .map-wrap #minimap{width:100%;height:100%}
+  .mission-card{top:clamp(320px,calc(82px + min(16vw,210px) + 48px),370px)}
+}
+@media (min-width: 1351px) and (max-height: 700px){
+  .map-wrap{top:90px;width:clamp(160px,12vw,205px);height:clamp(160px,12vw,205px)}
+  .mission-card{top:clamp(290px,calc(90px + min(12vw,205px) + 48px),350px);transform:scale(.78);transform-origin:top right}
+}
+
+/* Escala um pouco menor para a HUD inteira, preservando as proporções responsivas. */
+@media (min-width: 1351px){
+  .player-hud{left:clamp(128px,8.5vw,150px);width:clamp(330px,23vw,370px);height:158px;padding:8px 10px 8px 0;gap:14px}
+  .portrait{width:150px;height:150px;flex-basis:150px;margin-left:-126px;transform:translateY(-10px);border-width:4px}
+  .hud-title strong{font-size:21px;max-width:190px}.hud-title span{font-size:16px;padding:2px 7px}
+  .resource{height:23px;margin-top:5px}.resource span{font-size:12px;line-height:19px}.resource.experience{height:18px}
+  .hud-currencies{gap:9px}.currency{width:clamp(170px,10vw,190px);height:52px;padding:4px 8px;border-radius:15px}
+  .currency b{font-size:29px}.currency strong{font-size:18px}.currency em{width:27px;height:27px;font-size:24px;line-height:22px}
+  .region{width:clamp(210px,13vw,235px);padding:5px 8px}.region strong{font-size:15px}.region small{font-size:10px}
+  .map-wrap{top:88px;width:clamp(180px,12vw,220px);height:clamp(180px,12vw,220px)}
+  .map-wrap #minimap{border-width:5px}.compass{width:28px;height:28px;font-size:11px}
+  .mission-card{top:clamp(330px,calc(88px + min(12vw,220px) + 52px),390px);width:clamp(270px,19vw,350px)}
+  .mission-card header{min-height:47px;padding:5px 10px;font-size:18px}.mission-card header button{padding:6px 11px;font-size:12px}
+  .mission-row{min-height:68px;padding:8px 10px;gap:8px;font-size:13px}.mission-icon{width:22px;height:22px;flex-basis:22px}.mission-row small{font-size:11px}
+  .hud-edge-tools button{width:52px;height:52px}.hud-edge-tools .hud-icon{width:27px;height:27px}
+  .hud-nav{top:210px;width:180px}.hud-nav button{min-height:53px;padding:6px 10px;gap:9px;font-size:18px}.hud-nav .hud-icon{width:26px;height:26px;flex-basis:26px}
+  .hud-chat{width:clamp(285px,21vw,390px);height:clamp(165px,23vh,225px)}
+  .hud-chat nav{grid-template-rows:36px}.chat-lines{font-size:12px;padding:7px 10px}.chat-input input{padding:7px 9px;font-size:12px}.chat-input button{width:40px}
+  .world-frame .actionbar{width:min(650px,45vw);min-width:550px}
+  .world-frame .skill{height:clamp(94px,15vh,148px);padding:7px 5px 8px;gap:4px}
+  .skill-art{height:clamp(52px,9vh,94px)}.world-frame .skill kbd{min-width:34px;padding:1px 5px;font-size:22px}
+  .world-frame .skill strong{font-size:14px}.world-frame .skill small{font-size:10px}
+  .hud-shortcuts button{width:clamp(48px,4.2vw,74px);height:clamp(66px,9vh,96px);min-height:0;gap:5px}
+  .hud-shortcuts .hud-icon{width:clamp(26px,2.3vw,38px);height:clamp(26px,2.3vw,38px)}.hud-shortcuts span{font-size:clamp(7px,.62vw,11px)}
+}
+@media (min-width: 1001px) and (max-width: 1350px){
+  .map-wrap{width:clamp(160px,15vw,195px);height:clamp(160px,15vw,195px)}
+  .mission-card{top:clamp(300px,calc(82px + min(15vw,195px) + 44px),350px);width:clamp(210px,22vw,285px)}
+  .mission-card header{min-height:40px;font-size:15px}.mission-row{min-height:49px;padding:5px 7px;font-size:10px}.mission-row small{font-size:8px}
+  .hud-nav button{min-height:clamp(31px,4.5vh,41px);font-size:12px}
+  .hud-edge-tools button{width:37px;height:37px}.hud-edge-tools .hud-icon{width:23px;height:23px}
+  .world-frame .skill{height:clamp(70px,11vh,94px);padding:3px}.skill-art{height:clamp(34px,6vh,50px)}
+  .hud-shortcuts button{width:clamp(40px,4vw,52px);height:clamp(55px,8vh,68px);min-height:0}
+}
+@media (min-width: 761px) and (max-width: 1000px){
+  .map-wrap{width:clamp(125px,15vw,150px);height:clamp(125px,15vw,150px)}
+  .mission-card{width:clamp(195px,24vw,225px)}
+  .world-frame .skill{height:clamp(64px,11vh,84px);padding:2px}.skill-art{height:clamp(29px,5.5vh,42px)}
+  .hud-edge-tools button{width:30px;height:30px}
+}
+@media (max-width: 760px){
+  .hud-edge-tools button{width:24px;height:24px}.hud-edge-tools .hud-icon{width:16px;height:16px}
+  .map-wrap{width:clamp(74px,21vw,88px);height:clamp(74px,21vw,88px)}
+  .hud-nav button{min-height:clamp(24px,6.5vh,29px)}
+  .mission-row{min-height:clamp(31px,7vh,38px)}
+  .world-frame .skill{height:clamp(54px,9vh,66px)}.skill-art{height:clamp(24px,5vh,32px)}
+}
