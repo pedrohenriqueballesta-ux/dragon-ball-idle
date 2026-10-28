@@ -4,6 +4,7 @@ import { CONFIG, ZONES, MERCHANT, OBSTACLES, PLANETS, zoneAt } from './config.mj
 import { clamp, distance, norm, segmentDistance } from './math.mjs';
 import { statsFor, xpForLevel, bagWeight, createPlayer, exportPlayer as serializePlayer } from './characters.mjs';
 import { mobStats, spawnPoints } from './enemies.mjs';
+import { pesLivres } from './passagem.mjs';
 
 export class Game {
   constructor({ now = Date.now() / 1000, random = Math.random, populate = true } = {}) {
@@ -246,7 +247,10 @@ export class Game {
   }
   move(entity, dx, dy, dt, speed, radius = 15) {
     const world = PLANETS[entity.planet] || PLANETS.namek, onNamek = entity.planet === 'namek';
-    const attempt = (x, y) => x >= radius && y >= radius && x <= world.w - radius && y <= world.h - radius && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - x, o.y - y) < o.r + radius));
+    // Quem já está num ponto bloqueado (save antigo, mob nascido na água) pode sair dele.
+    const preso = !pesLivres(entity.planet, entity.x, entity.y, radius);
+    const attempt = (x, y) => x >= radius && y >= radius && x <= world.w - radius && y <= world.h - radius && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - x, o.y - y) < o.r + radius))
+      && (preso || pesLivres(entity.planet, x, y, radius));
     const nx = entity.x + dx * speed * dt, ny = entity.y + dy * speed * dt;
     if (attempt(nx, entity.y)) entity.x = nx;
     if (attempt(entity.x, ny)) entity.y = ny;
