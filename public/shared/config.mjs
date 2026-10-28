@@ -27,6 +27,27 @@ export const OBSTACLES = [];
 export function zoneAt(x, y) {
   return ZONES.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || null;
 }
+// Casas dos namekuseijins na Vila (sprites em assets/namek/casas/casa_N.png), no tamanho original.
+// Cada uma fica num terreiro de terra batida pintado no próprio solo.webp por
+// ~/idle-dbz/ferramentas/assentar_casas.py: ao mudar posição ou tamanho aqui, gere o solo de novo.
+// x, y = centro da base da casa no chão; w = largura desenhada (a altura segue a proporção do sprite).
+export const HOUSES = [
+  { sprite: 2, x: 525, y: 1615, w: 190 },
+  { sprite: 4, x: 285, y: 1405, w: 150 },
+  { sprite: 5, x: 765, y: 1330, w: 240 },
+  { sprite: 6, x: 525, y: 1075, w: 290 },
+  // Casas destruídas na luta contra o Freeza, no Campo de Batalha (assets/namek/ruinas/ruina_N.png).
+  { sprite: 1, x: 1760, y: 2470, w: 150, ruina: true },
+  { sprite: 3, x: 2260, y: 2410, w: 300, ruina: true },
+  { sprite: 5, x: 2660, y: 2230, w: 240, ruina: true },
+  { sprite: 6, x: 2980, y: 2510, w: 290, ruina: true },
+  { sprite: 4, x: 3400, y: 2650, w: 150, ruina: true },
+  { sprite: 2, x: 3700, y: 2370, w: 190, ruina: true }
+];
+// A parte da casa que ocupa o chão: um retângulo raso na base, recuado nas laterais.
+export function casaBloqueia(x, y) {
+  return HOUSES.some(c => Math.abs(x - c.x) < c.w * 0.42 && y < c.y - 6 && y > c.y - c.w * 0.32);
+}
 // Planetas (instâncias). 'terra' é o spawn verde pequeno e seguro (tela inicial);
 // 'namek' é o mundo atual com zonas, inimigos e combate. Só se troca de planeta por TP.
 export const PLANETS = {

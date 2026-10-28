@@ -126,3 +126,19 @@ export function drawVendor(ctx, merchant) {
   if (!loaded(art.vendor)) return;
   ctx.drawImage(art.vendor, 319, 148, 606, 1001, merchant.x - 17, merchant.y - 53, 34, 56);
 }
+
+// O chão sob as casas (terreiro de terra e contato com a base) já vem pintado no solo.webp.
+// Sem sombra: casa apoiada no chão não projeta sombra embaixo de si.
+export function drawHouseGround() {}
+
+// Casa namekiana com a base no ponto (x, y), enterrada alguns pixels no chão para não parecer
+// solta. Os sprites são reduzidos: suavizar evita serrilhado.
+export function drawHouse(ctx, house) {
+  const image = (house.ruina ? art.namekRuinas : art.namekCasas)[house.sprite - 1];
+  if (!loaded(image)) return false;
+  const h = house.w * image.naturalHeight / image.naturalWidth, enterra = Math.round(house.w * 0.035);
+  ctx.save();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(image, Math.round(house.x - house.w / 2), Math.round(house.y - h + enterra), house.w, h);
+  ctx.restore(); return true;
+}
