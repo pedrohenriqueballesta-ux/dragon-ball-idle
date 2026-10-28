@@ -7,6 +7,7 @@ import { GOKU_GOLPE } from './goku-golpe.mjs';
 import { SSJ_GOLPE } from './ssj-golpe.mjs';
 import { SAIBAMAN_PASSO } from './saibaman-passo.mjs';
 import { SAIBAMAN_GOLPE } from './saibaman-golpe.mjs';
+import { SENTINELA_PASSO } from './sentinela-passo.mjs';
 
 const imageCache = new Map();
 const loadImage = url => {
@@ -27,6 +28,7 @@ export const art = {
   ssjPasso: loadImage(SSJ_PASSO.file),
   saibamanPasso: loadImage(SAIBAMAN_PASSO.file),
   saibamanGolpe: loadImage(SAIBAMAN_GOLPE.file),
+  sentinelaPasso: loadImage(SENTINELA_PASSO.file),
   gokuGolpe: loadImage(GOKU_GOLPE.file),
   ssjGolpe: loadImage(SSJ_GOLPE.file),
   grass: loadImage('/assets/grass.png'),
