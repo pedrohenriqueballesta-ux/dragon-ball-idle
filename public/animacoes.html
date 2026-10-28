@@ -43,7 +43,8 @@ function paint(now){
  });
  requestAnimationFrame(paint);
 }
-const images=Object.values(art);
+// .flat(): art.freezaFrames é uma lista de 16 imagens, não uma imagem só.
+const images=Object.values(art).flat();
 Promise.all(images.map(im=>im.decode().catch(()=>{}))).then(()=>requestAnimationFrame(paint));
 </script>
 </html>
