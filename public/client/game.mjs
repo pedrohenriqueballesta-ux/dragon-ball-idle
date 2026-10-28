@@ -327,6 +327,24 @@ function effects(time) {
     }
   }
 }
+// Marcadores do minimapa com contorno preto e borda branca: aparecem em qualquer fundo
+// (areia, mata, água, terra vermelha). O jogador usa magenta, cor que o mapa não tem e que
+// não se confunde com os mobs (vermelho/laranja); outros jogadores, azul-claro e menores.
+function miniMarker(x, y, r, color) {
+  mctx.beginPath(); mctx.arc(x, y, r + 2, 0, Math.PI * 2); mctx.fillStyle = '#000'; mctx.fill();
+  mctx.beginPath(); mctx.arc(x, y, r + 1, 0, Math.PI * 2); mctx.fillStyle = '#fff'; mctx.fill();
+  mctx.beginPath(); mctx.arc(x, y, r, 0, Math.PI * 2); mctx.fillStyle = color; mctx.fill();
+}
+// Jogador: anel pulsando (chama o olho numa olhada rápida), seta para onde está virado e o marcador.
+function drawMiniSelf(x, y, facing) {
+  const pulse = (performance.now() / 1100) % 1;
+  mctx.beginPath(); mctx.arc(x, y, 6 + pulse * 9, 0, Math.PI * 2);
+  mctx.strokeStyle = `rgba(255, 43, 214, ${0.9 * (1 - pulse)})`; mctx.lineWidth = 2.5; mctx.stroke();
+  const a = Math.atan2(facing?.y || 1, facing?.x || 0), tip = (d, da) => [x + Math.cos(a + da) * d, y + Math.sin(a + da) * d];
+  mctx.beginPath(); mctx.moveTo(...tip(11, 0)); mctx.lineTo(...tip(6, 0.75)); mctx.lineTo(...tip(6, -0.75)); mctx.closePath();
+  mctx.fillStyle = '#fff'; mctx.fill(); mctx.strokeStyle = '#000'; mctx.lineWidth = 1.5; mctx.stroke();
+  miniMarker(x, y, 4, '#ff2bd6');
+}
 function drawMinimap(onNamek = true, world = PLANETS.namek) {
   const mapW = mini.width, mapH = mini.height;
   mctx.fillStyle = onNamek ? '#385a2d' : '#4f8a3a'; mctx.fillRect(0, 0, mapW, mapH);
@@ -343,7 +361,9 @@ function drawMinimap(onNamek = true, world = PLANETS.namek) {
     for (const o of OBSTACLES) { mctx.fillStyle = o.type === 'tree' ? '#92b342' : '#a8a49a'; mctx.beginPath(); mctx.arc(o.x*sx,o.y*sy,o.type === 'tree' ? 2.2 : 1.7,0,Math.PI*2); mctx.fill(); }
     for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
   }
-  for (const p of snapshot.players) { mctx.fillStyle = p.id === playerId ? '#fff5b4' : '#80d6ea'; mctx.beginPath();mctx.arc(p.x*sx,p.y*sy,2.5,0,Math.PI*2);mctx.fill(); }
+  for (const p of snapshot.players) if (p.id !== playerId) miniMarker(p.x * sx, p.y * sy, 2.5, '#5fd8ff');
+  const self = snapshot.players.find(p => p.id === playerId);
+  if (self) drawMiniSelf(self.x * sx, self.y * sy, self.facing);
   mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
 }
 function predictLocal(x, y, dx, dy, dist, world, onNamek) {
