@@ -77,7 +77,7 @@ test('movimento manual interrompe a caça e desconexão suspende evolução AFK'
 
 test('teclado e condução automática mantêm velocidade igual nas quatro diagonais', () => {
   for (const [x, y] of [[1, -1], [-1, -1], [1, 1], [-1, 1], [1, 0]]) {
-    const game = world(), p = game.addPlayer('a'); p.x = 1650; p.y = 700;
+    const game = world(), p = game.addPlayer('a'); p.planet = 'namek'; p.x = 1650; p.y = 700;
     const origin = { x: p.x, y: p.y };
     game.setInput(p.id, { x, y }); game.tick(0.1);
     assert.ok(Math.abs(Math.hypot(p.x - origin.x, p.y - origin.y) - p.stats.mobility * 0.1) < 1e-8);
@@ -94,7 +94,7 @@ test('teclado e condução automática mantêm velocidade igual nas quatro diago
 
 test('Saibaman, sentinela e chefe transmitem direção e recuperação sem antecipar o dano', () => {
   for (const type of ['melee', 'ranged', 'boss']) {
-    const game = world(), p = game.addPlayer('a'); p.x = 1650; p.y = 700;
+    const game = world(), p = game.addPlayer('a'); p.planet = 'namek'; p.x = 1650; p.y = 700;
     const mob = game.addMob(type, 1625, 725); mob.attackReady = game.time;
     game.tick(0.05);
     const view = game.snapshot(p.id).mobs[0];
@@ -121,7 +121,7 @@ test('transformação exige nível e termina quando o Ki acaba', () => {
 
 test('caça automática sustenta uma sessão inicial, derrota mobs e evolui sem entrada manual', () => {
   const game = new Game({ now: 1000, random: () => 0.5 });
-  const p = game.addPlayer('a');
+  const p = game.addPlayer('a'); p.planet = 'namek';
   game.action(p.id, { type: 'hunt', zone: 'campos' });
   advance(game, 60);
   assert.ok(p.kills >= 10);
@@ -129,6 +129,18 @@ test('caça automática sustenta uma sessão inicial, derrota mobs e evolui sem 
   assert.ok(p.hp > 0);
   assert.equal(p.autoHunt, true);
   assert.equal(p.inventory.food, 4);
+});
+
+test('jogador nasce na Terra, viaja para Namekusei e os planetas ficam isolados', () => {
+  const game = new Game({ now: 1000, random: () => 0.5 });
+  const p = game.addPlayer('a');
+  assert.equal(p.planet, 'terra');
+  assert.equal(game.snapshot(p.id).mobs.length, 0, 'sem inimigos na Terra');
+  assert.equal(game.action(p.id, { type: 'travelPlanet', planet: 'namek' }).ok, true);
+  assert.equal(p.planet, 'namek');
+  assert.ok(game.snapshot(p.id).mobs.length > 0, 'Namekusei tem inimigos');
+  game.action(p.id, { type: 'travelPlanet', planet: 'terra' });
+  assert.equal(game.snapshot(p.id).mobs.length, 0);
 });
 
 test('duas sessões HTTP reais recebem o mundo compartilhado e entradas não alteram atributos', async () => {

@@ -1,6 +1,6 @@
 // Regras autoritativas do jogo: combate, movimento, inventário e mundo.
 // Rodam no servidor; o navegador apenas apresenta o estado que chega daqui.
-import { CONFIG, ZONES, MERCHANT, OBSTACLES, zoneAt } from './config.mjs';
+import { CONFIG, ZONES, MERCHANT, OBSTACLES, PLANETS, zoneAt } from './config.mjs';
 import { clamp, distance, norm, segmentDistance } from './math.mjs';
 import { statsFor, xpForLevel, bagWeight, createPlayer, exportPlayer as serializePlayer } from './characters.mjs';
 import { mobStats, spawnPoints } from './enemies.mjs';
@@ -23,7 +23,7 @@ export class Game {
     const info = mobStats(type, zone);
     const m = { id: this.uid('m'), type, zone, x, y, homeX: x, homeY: y, ...info, maxHp: info.hp,
       attackReady: this.time + 1, telegraph: null, deadUntil: 0, moving: false,
-      facing: { x: 0, y: 1 }, strike: null };
+      facing: { x: 0, y: 1 }, strike: null, planet: 'namek' };
     this.mobs.set(m.id, m); return m;
   }
   populate() {
@@ -47,12 +47,12 @@ export class Game {
   canPvp(a, b) {
     if (!a || !b || a.id === b.id || !a.connected || !b.connected || a.hp <= 0 || b.hp <= 0) return false;
     const za = zoneAt(a.x, a.y), zb = zoneAt(b.x, b.y);
-    return Boolean(za?.pvp && zb?.pvp && za.id === zb.id);
+    return Boolean(a.planet === b.planet && za?.pvp && zb?.pvp && za.id === zb.id);
   }
   nearestMob(p, zone = null, radius = 350) {
     let best = null, d = radius;
     for (const m of this.mobs.values()) {
-      if (m.hp <= 0 || (zone && m.zone !== zone)) continue;
+      if (m.hp <= 0 || m.planet !== p.planet || (zone && m.zone !== zone)) continue;
       const dd = distance(p, m); if (dd < d) { d = dd; best = m; }
     }
     return best;
@@ -100,6 +100,13 @@ export class Game {
       if (p.ki < 10) return this.reject(p, 'Ki insuficiente para transformar.');
       p.transformed = true; p.ki -= 10; p.transformReady = this.time + 45;
       this.notify(p, 'Super Saiyajin ativado!'); return { ok: true };
+    }
+    if (kind === 'travelPlanet') {
+      const target = PLANETS[data.planet]; if (!target) return { ok: false };
+      if (p.planet === data.planet) return { ok: true };
+      p.planet = data.planet; p.autoHunt = false; p.moveTo = null; p.targetId = null; p.charge = null; p.transformed = false;
+      p.x = target.spawn.x; p.y = target.spawn.y; p.input = { x: 0, y: 0 };
+      this.notify(p, 'Viajou para ' + target.name + '.'); return { ok: true };
     }
     if (kind === 'skill') return this.cast(p, data.skill);
     return { ok: false, reason: 'Ação inválida.' };
@@ -238,7 +245,8 @@ export class Game {
     }
   }
   move(entity, dx, dy, dt, speed, radius = 15) {
-    const attempt = (x, y) => x >= radius && y >= radius && x <= CONFIG.width - radius && y <= CONFIG.height - radius && !OBSTACLES.some(o => Math.hypot(o.x - x, o.y - y) < o.r + radius);
+    const world = PLANETS[entity.planet] || PLANETS.namek, onNamek = entity.planet === 'namek';
+    const attempt = (x, y) => x >= radius && y >= radius && x <= world.w - radius && y <= world.h - radius && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - x, o.y - y) < o.r + radius));
     const nx = entity.x + dx * speed * dt, ny = entity.y + dy * speed * dt;
     if (attempt(nx, entity.y)) entity.x = nx;
     if (attempt(entity.x, ny)) entity.y = ny;
@@ -258,7 +266,7 @@ export class Game {
     p.moving = false;
     if (!p.connected) return;
     if (p.hp <= 0) {
-      if (this.time >= p.respawnAt) { p.x = 430; p.y = 440; p.hp = p.stats.hp; p.ki = p.stats.ki; p.input = { x: 0, y: 0 }; p.targetId = null; p.moveTo = null; }
+      if (this.time >= p.respawnAt) { const sp = (PLANETS[p.planet] || PLANETS.namek).spawn; p.x = sp.x; p.y = sp.y; p.hp = p.stats.hp; p.ki = p.stats.ki; p.input = { x: 0, y: 0 }; p.targetId = null; p.moveTo = null; }
       return;
     }
     if (p.foodUntil > this.time) p.hp = Math.min(p.stats.hp, p.hp + CONFIG.foodHealPerSecond * p.stats.healing * dt);
@@ -268,7 +276,7 @@ export class Game {
     if (this.time - p.inputAt > 0.35) p.input = { x: 0, y: 0 };
     if (this.time < p.dashUntil) this.move(p, p.dashDirection.x, p.dashDirection.y, dt, 620);
     else if (p.input.x || p.input.y) this.move(p, p.input.x, p.input.y, dt, p.stats.mobility * (p.charge ? 0.35 : 1));
-    else if (p.autoHunt) {
+    else if (p.autoHunt && p.planet === 'namek') {
       const z = ZONES.find(z => z.id === p.huntZone);
       if (zoneAt(p.x, p.y)?.id !== z.id) this.steer(p, { x: z.x + z.w / 2, y: z.y + z.h / 2 }, dt, p.stats.mobility);
       else {
@@ -297,7 +305,7 @@ export class Game {
       for (const other of this.players.values()) if (this.canPvp(p, other) && segmentDistance(other.x, other.y, p.x, p.y, bx, by) < 32) this.hit(p, other, p.stats.attack * (p.transformed ? 6 : 4.2) * (this.time < p.kaiokenUntil ? 1.4 : 1));
       p.charge = null;
     }
-    for (const l of this.loot) if (!l.taken && (l.owner === p.id || this.time > l.until - 30) && distance(p, l) < CONFIG.pickupRadius) {
+    if (p.planet === 'namek') for (const l of this.loot) if (!l.taken && (l.owner === p.id || this.time > l.until - 30) && distance(p, l) < CONFIG.pickupRadius) {
       if (this.addItem(p, l.item)) { l.taken = true; this.emit('pickup', { x: l.x, y: l.y, playerId: p.id, item: l.item }); }
       else if (this.time - p.lastBagNotice > 8) { p.lastBagNotice = this.time; this.notify(p, 'Mochila cheia: XP continua, novos itens ficam no chão.'); }
     }
@@ -307,14 +315,14 @@ export class Game {
     if (m.hp <= 0) { if (this.time >= m.deadUntil) { m.hp = m.maxHp; m.x = m.homeX; m.y = m.homeY; m.attackReady = this.time + 1; m.strike = null; } return; }
     let target = null, closest = m.type === 'boss' ? 460 : 300;
     for (const p of this.players.values()) {
-      if (!p.connected || p.hp <= 0 || zoneAt(p.x, p.y)?.id === 'vila') continue;
+      if (!p.connected || p.hp <= 0 || p.planet !== 'namek' || zoneAt(p.x, p.y)?.id === 'vila') continue;
       const d = distance(p, m); if (d < closest) { target = p; closest = d; }
     }
     if (m.telegraph) {
       if (this.time >= m.telegraph.until) {
         const t = m.telegraph;
         if (t.kind === 'shot') this.projectiles.push({ id: this.uid('s'), x: m.x, y: m.y, dx: t.dx, dy: t.dy, speed: 250, owner: m.id, ownerType: 'mob', damage: m.attack, ttl: 2 });
-        else for (const p of this.players.values()) if (p.connected && p.hp > 0 && Math.hypot(p.x - t.x, p.y - t.y) < t.radius && zoneAt(p.x, p.y)?.id !== 'vila') this.hit(m, p, m.attack);
+        else for (const p of this.players.values()) if (p.connected && p.hp > 0 && p.planet === 'namek' && Math.hypot(p.x - t.x, p.y - t.y) < t.radius && zoneAt(p.x, p.y)?.id !== 'vila') this.hit(m, p, m.attack);
         m.telegraph = null; m.attackReady = this.time + (m.type === 'boss' ? 1.5 : 0.95);
       }
       return;
@@ -343,7 +351,7 @@ export class Game {
       if (s.ttl <= 0) continue;
       const owner = s.ownerType === 'player' ? this.players.get(s.owner) : this.mobs.get(s.owner);
       if (!owner) { s.ttl = 0; continue; }
-      const targets = s.ownerType === 'player' ? [...this.mobs.values(), ...this.players.values()].filter(t => t.id !== owner.id) : [...this.players.values()].filter(p => p.connected && zoneAt(p.x, p.y)?.id !== 'vila');
+      const targets = s.ownerType === 'player' ? [...this.mobs.values(), ...this.players.values()].filter(t => t.id !== owner.id && t.planet === 'namek') : [...this.players.values()].filter(p => p.connected && p.planet === 'namek' && zoneAt(p.x, p.y)?.id !== 'vila');
       for (const t of targets) {
         const hitRadius = s.kind === 'genki' ? 38 : 19;
         if (t.hp > 0 && segmentDistance(t.x, t.y, oldX, oldY, s.x, s.y) < hitRadius) {
@@ -363,12 +371,13 @@ export class Game {
   }
   snapshot(id) {
     const self = this.players.get(id);
-    return { time: this.time, selfId: id,
-      players: [...this.players.values()].filter(p => p.connected).map(p => ({
+    const here = self ? self.planet : 'terra';
+    return { time: this.time, selfId: id, planet: here,
+      players: [...this.players.values()].filter(p => p.connected && p.planet === here).map(p => ({
         id: p.id, name: p.name, x: p.x, y: p.y, hp: p.hp, maxHp: p.stats.hp, ki: p.ki, maxKi: p.stats.ki,
         level: p.level, moving: p.moving, facing: p.facing, transformed: p.transformed,
         charge: p.charge, dashing: this.time < p.dashUntil, dead: p.hp <= 0 })),
-      self: self ? { level: self.level, xp: self.xp, xpNext: xpForLevel(self.level), stats: self.stats,
+      self: self ? { planet: self.planet, level: self.level, xp: self.xp, xpNext: xpForLevel(self.level), stats: self.stats,
         hp: self.hp, ki: self.ki, zeni: self.zeni, inventory: self.inventory, weight: bagWeight(self.inventory),
         autoAttack: self.autoAttack, autoSkills: self.autoSkills, autoHunt: self.autoHunt, huntZone: self.huntZone,
         autoFood: self.autoFood, autoKi: self.autoKi, autoSeed: self.autoSeed, targetId: self.targetId,
@@ -380,7 +389,7 @@ export class Game {
         genkiRemaining: Math.max(0, self.genkiReady - this.time), transformRemaining: Math.max(0, self.transformReady - this.time),
         transformed: self.transformed, kills: self.kills, bossKills: self.bossKills,
         respawnRemaining: Math.max(0, self.respawnAt - this.time) } : null,
-      mobs: [...this.mobs.values()].filter(m => m.hp > 0).map(m => ({ id: m.id, type: m.type, zone: m.zone, name: m.name, x: m.x, y: m.y, hp: m.hp, maxHp: m.maxHp, moving: m.moving, facing: m.facing, telegraph: m.telegraph, strike: m.strike && this.time < m.strike.until ? m.strike : null })),
-      projectiles: this.projectiles, loot: this.loot, events: this.events.filter(e => !e.playerId || e.playerId === id || e.type !== 'message') };
+      mobs: here === 'namek' ? [...this.mobs.values()].filter(m => m.hp > 0).map(m => ({ id: m.id, type: m.type, zone: m.zone, name: m.name, x: m.x, y: m.y, hp: m.hp, maxHp: m.maxHp, moving: m.moving, facing: m.facing, telegraph: m.telegraph, strike: m.strike && this.time < m.strike.until ? m.strike : null })) : [],
+      projectiles: here === 'namek' ? this.projectiles : [], loot: here === 'namek' ? this.loot : [], events: this.events.filter(e => !e.playerId || e.playerId === id || e.type !== 'message') };
   }
 }
