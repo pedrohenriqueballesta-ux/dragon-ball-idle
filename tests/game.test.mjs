@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, CONFIG, statsFor, xpForLevel, bagWeight } from '../public/shared/index.mjs';
+import { Game, CONFIG, PLANETS, statsFor, xpForLevel, bagWeight } from '../public/shared/index.mjs';
 import { createGameServer } from '../server.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });
@@ -49,15 +49,16 @@ test('subir de nível aumenta todos os atributos automaticamente e libera técni
 test('PvP é recusado fora da região e permitido com os dois jogadores na área PvP', () => {
   const game = world(), a = game.addPlayer('a'), b = game.addPlayer('b');
   assert.equal(game.hit(a, b, 30), false); assert.equal(b.hp, b.stats.hp);
-  a.x = 2800; a.y = 800; b.x = 2840; b.y = 800;
+  // Planalto da Nave do Freeza (arena PvP) começa em x = 3450.
+  a.planet = b.planet = 'namek'; a.x = 3600; a.y = 1200; b.x = 3640; b.y = 1200;
   assert.equal(game.hit(a, b, 30), true); assert.ok(b.hp < b.stats.hp);
-  b.x = 2700; const hp = b.hp;
+  b.x = 3400; const hp = b.hp;
   assert.equal(game.hit(a, b, 30), false); assert.equal(b.hp, hp);
 });
 
 test('Kamehameha atravessando a fronteira não causa dano em jogador fora da área PvP', () => {
   const game = world(), a = game.addPlayer('a', 'Goku', { level: 3 }), b = game.addPlayer('b');
-  a.x = 2800; a.y = 800; b.x = 2700; b.y = 800; a.aim = { x: b.x, y: b.y };
+  a.planet = b.planet = 'namek'; a.x = 3500; a.y = 1200; b.x = 3400; b.y = 1200; a.aim = { x: b.x, y: b.y };
   assert.equal(game.cast(a, 'kame').ok, true);
   advance(game, 0.8); assert.equal(b.hp, b.stats.hp);
 });
@@ -79,8 +80,9 @@ test('movimento manual interrompe a caça e desconexão suspende evolução AFK'
 });
 
 test('teclado e condução automática mantêm velocidade igual nas quatro diagonais', () => {
+  // Mede só a velocidade: o mob anda na Terra, sem água nem caminho por terra no meio.
   for (const [x, y] of [[1, -1], [-1, -1], [1, 1], [-1, 1], [1, 0]]) {
-    const game = world(), p = game.addPlayer('a'); p.planet = 'namek'; p.x = 1650; p.y = 700;
+    const game = world(), p = game.addPlayer('a'); p.planet = 'namek'; p.x = 1650; p.y = 900;
     const origin = { x: p.x, y: p.y };
     game.setInput(p.id, { x, y }); game.tick(0.1);
     assert.ok(Math.abs(Math.hypot(p.x - origin.x, p.y - origin.y) - p.stats.mobility * 0.1) < 1e-8);
@@ -88,9 +90,9 @@ test('teclado e condução automática mantêm velocidade igual nas quatro diago
     assert.equal(Math.sign(p.y - origin.y), y);
     const direction = game.snapshot(p.id).players[0].facing;
     assert.equal(Math.sign(direction.x), x); assert.equal(Math.sign(direction.y), y);
-    const mob = game.addMob('melee', 1650, 700);
+    const mob = game.addMob('melee', 550, 380); mob.planet = 'terra';
     game.steer(mob, { x: mob.x + x * 100, y: mob.y + y * 100 }, 0.1, mob.speed);
-    assert.ok(Math.abs(Math.hypot(mob.x - 1650, mob.y - 700) - mob.speed * 0.1) < 1e-8);
+    assert.ok(Math.abs(Math.hypot(mob.x - 550, mob.y - 380) - mob.speed * 0.1) < 1e-8);
     assert.equal(Math.sign(mob.facing.x), x); assert.equal(Math.sign(mob.facing.y), y);
   }
 });
@@ -125,11 +127,10 @@ test('transformação exige nível e termina quando o Ki acaba', () => {
   high.ki = 0.1; advance(game, 0.1); assert.equal(high.transformed, false);
 });
 
-// PENDENTE (mapa-namekusei, etapa 3): com o solo novo, os Campos e os mobs ainda estão nas
-// coordenadas do mapa antigo, que agora caem no mar. Volta a valer quando as regiões forem reposicionadas.
-test('caça automática sustenta uma sessão inicial, derrota mobs e evolui sem entrada manual', { todo: 'etapa 3: reposicionar regiões e mobs no mapa novo' }, () => {
+test('caça automática sustenta uma sessão inicial, derrota mobs e evolui sem entrada manual', () => {
+  // Sai da praça da Vila e precisa contornar o mar por terra até as Planícies.
   const game = new Game({ now: 1000, random: () => 0.5 });
-  const p = game.addPlayer('a'); p.planet = 'namek';
+  const p = game.addPlayer('a'); p.planet = 'namek'; p.x = PLANETS.namek.spawn.x; p.y = PLANETS.namek.spawn.y;
   game.action(p.id, { type: 'hunt', zone: 'campos' });
   advance(game, 60);
   assert.ok(p.kills >= 10);

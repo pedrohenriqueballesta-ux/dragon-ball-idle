@@ -68,7 +68,7 @@ async function join(name, previousToken) {
     } catch (e) { console.error('Falha ao ler estado do jogo:', e.message); }
   };
   if ($('welcomeDialog').open) $('welcomeDialog').close();
-  notify(data.resumed ? 'Seu personagem foi recuperado.' : 'Bem-vindo! Vá aos Campos da Terra ou ative a caça automática.');
+  notify(data.resumed ? 'Seu personagem foi recuperado.' : 'Bem-vindo! Vá às Planícies de Namekusei ou ative a caça automática.');
 }
 
 function updateUI() {
@@ -104,7 +104,7 @@ function updateUI() {
   $('huntStatus').textContent = s.autoHunt ? 'CAÇA AUTOMÁTICA ATIVA' : 'Exploração manual';
   $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H'; $('quickHunt').classList.toggle('running', s.autoHunt);
   const z = zoneAt(p.x, p.y);
-  $('regionName').textContent = snapshot.planet !== 'namek' ? (PLANETS[snapshot.planet]?.name || 'Terra') : (z?.name || 'Trilhas da Terra');
+  $('regionName').textContent = snapshot.planet !== 'namek' ? (PLANETS[snapshot.planet]?.name || 'Terra') : (z?.name || 'Trilhas de Namekusei');
   $('regionType').textContent = snapshot.planet !== 'namek' ? 'PLANETA SEGURO' : (z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE');
   document.querySelector('.region').classList.toggle('pvp', Boolean(z?.pvp));
   $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');

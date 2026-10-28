@@ -28,3 +28,17 @@ test('quem nasce dentro da água consegue sair dela', () => {
   const x = p.x; game.setInput(p.id, { x: 1, y: 0 }); game.tick(0.1);
   assert.ok(p.x > x, 'não fica preso no mar');
 });
+
+test('regiões e mobs de Namekusei ficam em terra firme, e o mercador na Vila', async () => {
+  const { ZONES, MERCHANT } = await import('../public/shared/config.mjs');
+  const game = new Game({ now: 1000, random: () => 0.5 });
+  const mobs = [...game.mobs.values()];
+  assert.ok(mobs.filter(m => m.zone === 'campos').length >= 12, 'Planícies com mobs suficientes');
+  assert.ok(mobs.filter(m => m.zone === 'cratera').length >= 8, 'Campo de Batalha com mobs suficientes');
+  for (const m of mobs) assert.equal(podeAndar('namek', m.x, m.y), true, m.name + ' nasceu na água');
+  assert.equal(podeAndar('namek', MERCHANT.x, MERCHANT.y), true);
+  const vila = ZONES.find(z => z.id === 'vila');
+  assert.ok(MERCHANT.x > vila.x && MERCHANT.x < vila.x + vila.w && MERCHANT.y > vila.y && MERCHANT.y < vila.y + vila.h, 'mercador dentro da Vila');
+  const { x, y } = PLANETS.namek.spawn;
+  assert.ok(x > vila.x && x < vila.x + vila.w && y > vila.y && y < vila.y + vila.h, 'chegada dentro da Vila (segura)');
+});

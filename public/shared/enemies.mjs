@@ -1,7 +1,10 @@
 // Inimigos do protótipo e onde eles aparecem no mapa.
 // Para ajustar atributos ou adicionar um inimigo, mexa só neste arquivo.
 
-// Atributos de cada tipo de inimigo. A Cratera Rubra tem versões mais fortes.
+import { ZONES } from './config.mjs';
+import { podeAndar } from './passagem.mjs';
+
+// Atributos de cada tipo de inimigo. O Campo de Batalha ('cratera') tem versões mais fortes.
 // O chefe (boss) é o Freeza.
 export function mobStats(type, zone = 'campos') {
   if (type === 'boss') return { hp: 650, attack: 30, xp: 140, speed: 80, name: 'Freeza · Boss' };
@@ -9,16 +12,25 @@ export function mobStats(type, zone = 'campos') {
   return { hp: zone === 'cratera' ? 90 : 42, attack: zone === 'cratera' ? 15 : 8, xp: zone === 'cratera' ? 18 : 10, speed: 115, name: 'Saibaman' };
 }
 
-// Pontos de nascimento dos inimigos no mundo. Recebe a função de aleatoriedade
-// do jogo para manter a simulação determinística nos testes.
-export function spawnPoints(random) {
-  const points = [];
-  for (let i = 0; i < 14; i++) {
-    const x = 1000 + (i % 5) * 290 + random() * 65;
-    const y = 500 + Math.floor(i / 5) * 235 + random() * 60;
-    points.push({ type: i % 4 === 3 ? 'ranged' : 'melee', x, y, zone: 'campos' });
+// Pontos de nascimento dos inimigos: uma grade dentro de cada região, ficando só os pontos
+// em terra firme (máscara de passagem) e com folga da água. O sorteio só desloca cada ponto
+// um pouco, então funciona até com aleatoriedade fixa (testes).
+const em_terra = (x, y) => [[0, 0], [24, 0], [-24, 0], [0, 24], [0, -24]].every(([dx, dy]) => podeAndar('namek', x + dx, y + dy));
+function espalhar(random, zone, n, tipo) {
+  const z = ZONES.find(z => z.id === zone), candidatos = [];
+  for (let y = z.y + 90; y < z.y + z.h - 60; y += 170) for (let x = z.x + 90; x < z.x + z.w - 60; x += 170) {
+    const px = x + (random() - 0.5) * 60, py = y + (random() - 0.5) * 60;
+    if (em_terra(px, py)) candidatos.push({ x: px, y: py });
   }
-  for (let i = 0; i < 8; i++) points.push({ type: i % 3 === 0 ? 'ranged' : 'melee', x: 1100 + (i % 4) * 290, y: 1490 + Math.floor(i / 4) * 320, zone: 'cratera' });
-  points.push({ type: 'boss', x: 2370, y: 1640, zone: 'cratera' });
-  return points;
+  // Pega n pontos bem distribuídos ao longo da lista (em vez dos n primeiros, que ficariam todos no topo).
+  const passo = Math.max(1, candidatos.length / n);
+  return Array.from({ length: Math.min(n, candidatos.length) }, (_, i) => ({ ...candidatos[Math.floor(i * passo)], type: tipo(i), zone }));
+}
+export function spawnPoints(random) {
+  return [
+    ...espalhar(random, 'campos', 16, i => i % 4 === 3 ? 'ranged' : 'melee'),
+    ...espalhar(random, 'cratera', 10, i => i % 3 === 0 ? 'ranged' : 'melee'),
+    // Freeza junto à cratera grande do campo de batalha.
+    { type: 'boss', x: 3330, y: 2280, zone: 'cratera' }
+  ];
 }
