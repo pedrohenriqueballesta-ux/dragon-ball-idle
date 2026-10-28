@@ -1,6 +1,7 @@
 // Dados do mundo e números de balanceamento do protótipo. Todos ajustáveis.
 export const CONFIG = Object.freeze({
-  width: 3300, height: 2200, foodDuration: 300, foodHealPerSecond: 2,
+  // Namekusei: 3x a imagem do solo (1536x1024 → 4608x3072), cerca de 2x a área do mapa antigo.
+  width: 4608, height: 3072, foodDuration: 300, foodHealPerSecond: 2,
   seedCooldown: 20, kiCooldown: 8, pickupRadius: 60, respawnDelay: 4,
   seedPotencies: [15, 30, 50, 100],
   itemWeights: { food: 0.35, ki: 0.2, seed15: 0.08, seed30: 0.08, seed50: 0.08, seed100: 0.08, scrap: 0.7, crystal: 0.45 },
@@ -16,17 +17,9 @@ export const ZONES = [
   { id: 'arena', name: 'Fronteira de Combate', x: 2720, y: 220, w: 490, h: 1750, pvp: true }
 ];
 export const MERCHANT = { x: 430, y: 300 };
-export const OBSTACLES = [
-  { x: 180, y: 180, r: 42, type: 'tree' }, { x: 610, y: 180, r: 42, type: 'tree' },
-  { x: 165, y: 515, r: 44, type: 'tree' }, { x: 660, y: 570, r: 38, type: 'tree' },
-  { x: 850, y: 430, r: 32, type: 'rock' }, { x: 1220, y: 310, r: 45, type: 'tree' },
-  { x: 1730, y: 380, r: 40, type: 'tree' }, { x: 2220, y: 250, r: 40, type: 'tree' },
-  { x: 2050, y: 830, r: 38, type: 'rock' }, { x: 1430, y: 890, r: 48, type: 'tree' },
-  { x: 2410, y: 1100, r: 46, type: 'tree' }, { x: 980, y: 1120, r: 40, type: 'tree' },
-  { x: 1010, y: 1530, r: 44, type: 'rock' }, { x: 1360, y: 1840, r: 50, type: 'rock' },
-  { x: 2130, y: 1460, r: 46, type: 'rock' }, { x: 2440, y: 1890, r: 44, type: 'rock' },
-  { x: 2750, y: 120, r: 38, type: 'rock' }, { x: 2660, y: 2060, r: 45, type: 'tree' }
-];
+// Árvores e pedras do mapa antigo saíram com o solo novo de Namekusei (28/10).
+// Os novos obstáculos entram nas próximas etapas, posicionados sobre a imagem do solo.
+export const OBSTACLES = [];
 export function zoneAt(x, y) {
   return ZONES.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || null;
 }
@@ -34,5 +27,5 @@ export function zoneAt(x, y) {
 // 'namek' é o mundo atual com zonas, inimigos e combate. Só se troca de planeta por TP.
 export const PLANETS = {
   terra: { id: 'terra', name: 'Terra', w: 1100, h: 760, spawn: { x: 550, y: 380 } },
-  namek: { id: 'namek', name: 'Namekusei', w: CONFIG.width, h: CONFIG.height, spawn: { x: 430, y: 440 } }
+  namek: { id: 'namek', name: 'Namekusei', w: CONFIG.width, h: CONFIG.height, spawn: { x: 480, y: 1410 } } // praça da Vila Namekiana
 };

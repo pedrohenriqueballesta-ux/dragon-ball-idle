@@ -19,8 +19,8 @@
   </header>
   <canvas id="mapa"></canvas>
   <script type="module">
-    import { CONFIG, ZONES, OBSTACLES, MERCHANT } from './shared/index.mjs';
-    import { art, drawTerrain, drawTree, drawRock, drawVendor } from './art/index.mjs';
+    import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS } from './shared/index.mjs';
+    import { art, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor } from './art/index.mjs';
     const canvas = document.getElementById('mapa'), ctx = canvas.getContext('2d');
     // .flat(): algumas entradas de art são listas de quadros (ex.: freezaFrames).
     const imagens = Object.values(art).flat(); let prontas = 0;
@@ -31,7 +31,9 @@
       canvas.width = Math.round(CONFIG.width * escala); canvas.height = Math.round(CONFIG.height * escala);
       ctx.imageSmoothingEnabled = false;
       ctx.save(); ctx.scale(escala, escala);
-      drawTerrain(ctx, CONFIG, ZONES, MERCHANT, { x: 0, y: 0, scale: escala }, canvas.width, canvas.height);
+      const cam = { x: 0, y: 0, scale: escala };
+      if (drawGroundImage(ctx, art.namekSolo, PLANETS.namek, cam, canvas.width, canvas.height)) drawMarket(ctx, MERCHANT);
+      else drawTerrain(ctx, CONFIG, ZONES, MERCHANT, cam, canvas.width, canvas.height);
       for (const o of [...OBSTACLES].sort((a, b) => a.y - b.y)) (o.type === 'tree' ? drawTree : drawRock)(ctx, o);
       drawVendor(ctx, MERCHANT);
       ctx.font = 'bold 34px system-ui'; ctx.textAlign = 'center'; ctx.lineWidth = 6;

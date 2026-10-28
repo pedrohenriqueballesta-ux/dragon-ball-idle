@@ -75,7 +75,22 @@ export function drawTerrain(ctx, config, zones, merchant, camera, width, height)
   ctx.strokeRect(arena.x, arena.y, arena.w, arena.h); ctx.setLineDash([]);
   ctx.strokeStyle = '#22341e'; ctx.lineWidth = 12; ctx.strokeRect(0, 0, config.width, config.height);
 
-  // The merchant stand sits at the original location and is deliberately passable.
+  drawMarket(ctx, merchant);
+}
+
+// Solo do planeta a partir de uma imagem única esticada para o tamanho do mundo.
+// Desenha só o trecho visível na câmera.
+export function drawGroundImage(ctx, image, world, camera, width, height) {
+  if (!loaded(image)) return false;
+  const kx = image.naturalWidth / world.w, ky = image.naturalHeight / world.h;
+  const x = Math.max(0, camera.x - 4), y = Math.max(0, camera.y - 4);
+  const w = Math.min(world.w - x, width / camera.scale + 8), h = Math.min(world.h - y, height / camera.scale + 8);
+  ctx.drawImage(image, x * kx, y * ky, w * kx, h * ky, x, y, w, h);
+  return true;
+}
+
+// Barraca do mercador: fica no lugar do MERCHANT e não bloqueia a passagem.
+export function drawMarket(ctx, merchant) {
   const mx = merchant.x, my = merchant.y;
   ctx.fillStyle = '#513322'; ctx.fillRect(mx - 49, my - 54, 98, 46);
   ctx.fillStyle = '#a4623a'; ctx.fillRect(mx - 55, my - 63, 110, 20);
