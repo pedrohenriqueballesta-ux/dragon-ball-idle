@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prévia do mapa de Namekusei — Dragon Ball Idle</title>
+  <style>
+    body { margin: 0; background: #14171c; color: #e8e2d4; font: 14px system-ui, sans-serif; }
+    header { padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+    .legenda { opacity: .75; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Prévia do mapa de Namekusei</strong>
+    <label>Escala <select id="escala"><option value="0.35">35%</option><option value="0.5" selected>50%</option><option value="1">100%</option></select></label>
+    <label><input type="checkbox" id="verPassagem" checked> Mostrar onde bloqueia (vermelho)</label>
+    <span class="legenda">Só o cenário: mobs e jogadores aparecem no jogo. Regiões e colisão não mudam aqui.</span>
+  </header>
+  <canvas id="mapa"></canvas>
+  <script type="module">
+    import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS } from './shared/index.mjs';
+    import { podeAndar } from './shared/passagem.mjs';
+    import { art, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor } from './art/index.mjs';
+    const canvas = document.getElementById('mapa'), ctx = canvas.getContext('2d');
+    // .flat(): algumas entradas de art são listas de quadros (ex.: freezaFrames).
+    const imagens = Object.values(art).flat(); let prontas = 0;
+    const progresso = () => { document.body.dataset.carregadas = ++prontas + '/' + imagens.length; };
+    const carregadas = Promise.all(imagens.map(img => img.complete ? progresso() : new Promise(ok => { img.addEventListener('load', ok); img.addEventListener('error', ok); }).then(progresso)));
+    function desenhar() {
+      const escala = Number(document.getElementById('escala').value);
+      canvas.width = Math.round(CONFIG.width * escala); canvas.height = Math.round(CONFIG.height * escala);
+      ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.scale(escala, escala);
+      const cam = { x: 0, y: 0, scale: escala };
+      if (drawGroundImage(ctx, art.namekSolo, PLANETS.namek, cam, canvas.width, canvas.height)) drawMarket(ctx, MERCHANT);
+      else drawTerrain(ctx, CONFIG, ZONES, MERCHANT, cam, canvas.width, canvas.height);
+      for (const o of [...OBSTACLES].sort((a, b) => a.y - b.y)) (o.type === 'tree' ? drawTree : drawRock)(ctx, o);
+      drawVendor(ctx, MERCHANT);
+      if (document.getElementById('verPassagem').checked) {
+        // Uma amostra a cada 12 unidades do mundo: rápido e suficiente para conferir.
+        ctx.fillStyle = '#ff2a2a66';
+        for (let y = 0; y < PLANETS.namek.h; y += 12) for (let x = 0; x < PLANETS.namek.w; x += 12)
+          if (!podeAndar('namek', x + 6, y + 6)) ctx.fillRect(x, y, 12, 12);
+      }
+      ctx.font = 'bold 34px system-ui'; ctx.textAlign = 'center'; ctx.lineWidth = 6;
+      for (const z of ZONES) { ctx.strokeStyle = '#000a'; ctx.strokeText(z.name, z.x + z.w / 2, z.y + 44); ctx.fillStyle = '#fff'; ctx.fillText(z.name, z.x + z.w / 2, z.y + 44); }
+      ctx.restore();
+      document.body.dataset.pronto = '1';
+    }
+    document.getElementById('escala').onchange = desenhar;
+    document.getElementById('verPassagem').onchange = desenhar;
+    const avisar = e => { document.querySelector('.legenda').textContent = 'Erro: ' + (e?.message || e); };
+    window.addEventListener('error', e => avisar(e.error || e.message));
+    carregadas.then(desenhar).catch(avisar);
+  </script>
+</body>
+</html>

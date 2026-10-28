@@ -1,5 +1,5 @@
 import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, zoneAt } from '../shared/index.mjs';
-import { art, CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
+import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
 import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
 const $ = id => document.getElementById(id);
@@ -331,7 +331,10 @@ function drawMinimap(onNamek = true, world = PLANETS.namek) {
   const mapW = mini.width, mapH = mini.height;
   mctx.fillStyle = onNamek ? '#385a2d' : '#4f8a3a'; mctx.fillRect(0, 0, mapW, mapH);
   const sx = mapW / world.w, sy = mapH / world.h;
-  if (onNamek) {
+  if (onNamek && art.namekSolo.complete && art.namekSolo.naturalWidth) {
+    mctx.drawImage(art.namekSolo, 0, 0, mapW, mapH);
+    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
+  } else if (onNamek) {
     mctx.fillStyle = '#c09b6e';
     mctx.beginPath();
     for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
@@ -358,7 +361,9 @@ function frame(now) {
   camera = cameraView(position, width, height, zoom, world.w, world.h);
   ctx.save(); ctx.scale(camera.scale, camera.scale); ctx.translate(-camera.x, -camera.y);
   if (onNamek) {
-    drawTerrain(ctx, CONFIG, ZONES, MERCHANT, camera, width, height); telegraphs(time);
+    if (drawGroundImage(ctx, art.namekSolo, world, camera, width, height)) drawMarket(ctx, MERCHANT);
+    else drawTerrain(ctx, CONFIG, ZONES, MERCHANT, camera, width, height);
+    telegraphs(time);
     for (const l of snapshot.loot) { shadow(l.x, l.y, 7); ctx.fillStyle = l.item.startsWith('seed') ? '#a4cf72' : l.item === 'crystal' ? '#83d2d3' : '#d7c8a3'; ctx.fillRect(l.x - 5, l.y - 6 + Math.sin(time * 3) * 2, 10, 9); ctx.fillStyle = '#edf3c1'; ctx.fillRect(l.x - 2, l.y - 8, 4, 3); }
   } else {
     // Planeta Terra: gramado verde limpo e seguro (tela inicial).
