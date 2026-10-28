@@ -1,7 +1,7 @@
 // Personagem jogável (Goku) e sua progressão. Novos personagens jogáveis
 // podem ser descritos aqui no futuro, sem mexer na lógica de combate.
 import { clamp } from './math.mjs';
-import { CONFIG } from './config.mjs';
+import { CONFIG, PLANETS } from './config.mjs';
 
 export function statsFor(level) {
   const n = Math.max(0, level - 1);
@@ -25,7 +25,7 @@ export function createPlayer(id, name = 'Guerreiro', saved = null, now = 0) {
   if (saved?.inventory) for (const key of Object.keys(inventory)) inventory[key] = clamp(Math.floor(Number(saved.inventory[key]) || 0), 0, 99999);
   return { id, name: String(name).trim().slice(0, 18) || 'Guerreiro', character: 'Goku', level,
     xp: clamp(Number(saved?.xp) || 0, 0, xpForLevel(level) - 1), stats,
-    x: clamp(Number(saved?.x) || 430, 40, CONFIG.width - 40), y: clamp(Number(saved?.y) || 440, 40, CONFIG.height - 40),
+    x: PLANETS.terra.spawn.x, y: PLANETS.terra.spawn.y, planet: 'terra',
     hp: clamp(saved?.hp == null ? stats.hp : Number(saved.hp), 1, stats.hp),
     ki: clamp(saved?.ki == null ? stats.ki : Number(saved.ki), 0, stats.ki),
     zeni: clamp(Number(saved?.zeni ?? 200), 0, 9999999), inventory, kills: Number(saved?.kills) || 0,

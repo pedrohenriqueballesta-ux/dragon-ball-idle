@@ -1,4 +1,4 @@
-import { CONFIG, ZONES, OBSTACLES, MERCHANT, zoneAt } from '../shared/index.mjs';
+import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, zoneAt } from '../shared/index.mjs';
 import { art, CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
 import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
@@ -90,7 +90,8 @@ function updateUI() {
   $('huntStatus').textContent = s.autoHunt ? 'CAÇA AUTOMÁTICA ATIVA' : 'Exploração manual';
   $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H'; $('quickHunt').classList.toggle('running', s.autoHunt);
   const z = zoneAt(p.x, p.y);
-  $('regionName').textContent = z?.name || 'Trilhas da Terra'; $('regionType').textContent = z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE';
+  $('regionName').textContent = snapshot.planet !== 'namek' ? (PLANETS[snapshot.planet]?.name || 'Terra') : (z?.name || 'Trilhas da Terra');
+  $('regionType').textContent = snapshot.planet !== 'namek' ? 'PLANETA SEGURO' : (z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE');
   document.querySelector('.region').classList.toggle('pvp', Boolean(z?.pvp));
   $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');
   $('coordsText').textContent = 'X: ' + Math.round(p.x) + '   Y: ' + Math.round(p.y);
@@ -196,6 +197,7 @@ $('quickHunt').onclick = () => $('huntButton').click();
 $('shopButton').onclick = () => $('shopDialog').showModal();
 for (const btn of document.querySelectorAll('[data-close]')) btn.onclick = () => $(btn.dataset.close).close();
 for (const btn of document.querySelectorAll('[data-travel]')) btn.onclick = () => action({ type: 'travel', zone: btn.dataset.travel });
+for (const btn of document.querySelectorAll('[data-planet]')) btn.onclick = () => { action({ type: 'travelPlanet', planet: btn.dataset.planet }); $('planetsDialog')?.close(); };
 $('saveButton').onclick = async () => { try { await api('save'); notify('Progresso salvo no servidor.'); } catch (e) { notify(e.message); } };
 for (const [key, price] of Object.entries(CONFIG.prices)) {
   const row = document.createElement('div'); row.className = 'shop-item';
@@ -308,17 +310,19 @@ function effects(time) {
     }
   }
 }
-function drawMinimap() {
+function drawMinimap(onNamek = true, world = PLANETS.namek) {
   const mapW = mini.width, mapH = mini.height;
-  mctx.fillStyle = '#385a2d'; mctx.fillRect(0, 0, mapW, mapH);
-  const sx = mapW / CONFIG.width, sy = mapH / CONFIG.height;
-  mctx.fillStyle = '#c09b6e';
-  mctx.beginPath();
-  for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
-  mctx.fill();
-  const arena=ZONES.find(z => z.pvp); mctx.fillStyle='#a44f3655'; mctx.fillRect(arena.x*sx,arena.y*sy,arena.w*sx,arena.h*sy);
-  for (const o of OBSTACLES) { mctx.fillStyle = o.type === 'tree' ? '#92b342' : '#a8a49a'; mctx.beginPath(); mctx.arc(o.x*sx,o.y*sy,o.type === 'tree' ? 2.2 : 1.7,0,Math.PI*2); mctx.fill(); }
-  for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
+  mctx.fillStyle = onNamek ? '#385a2d' : '#4f8a3a'; mctx.fillRect(0, 0, mapW, mapH);
+  const sx = mapW / world.w, sy = mapH / world.h;
+  if (onNamek) {
+    mctx.fillStyle = '#c09b6e';
+    mctx.beginPath();
+    for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
+    mctx.fill();
+    const arena=ZONES.find(z => z.pvp); mctx.fillStyle='#a44f3655'; mctx.fillRect(arena.x*sx,arena.y*sy,arena.w*sx,arena.h*sy);
+    for (const o of OBSTACLES) { mctx.fillStyle = o.type === 'tree' ? '#92b342' : '#a8a49a'; mctx.beginPath(); mctx.arc(o.x*sx,o.y*sy,o.type === 'tree' ? 2.2 : 1.7,0,Math.PI*2); mctx.fill(); }
+    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
+  }
   for (const p of snapshot.players) { mctx.fillStyle = p.id === playerId ? '#fff5b4' : '#80d6ea'; mctx.beginPath();mctx.arc(p.x*sx,p.y*sy,2.5,0,Math.PI*2);mctx.fill(); }
   mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
 }
@@ -329,16 +333,24 @@ function frame(now) {
     ctx.fillStyle = '#2f4a3b'; ctx.fillRect(0, 0, width, height); ctx.fillStyle = '#9db78f'; ctx.font = '14px monospace'; ctx.textAlign = 'center'; ctx.fillText('PREPARANDO O MUNDO', width / 2, height / 2); requestAnimationFrame(frame); return;
   }
   const time = snapshot.time + Math.min(0.2, (now - receivedAt) / 1000);
+  const onNamek = snapshot.planet === 'namek';
+  const world = PLANETS[snapshot.planet] || PLANETS.namek;
   const self = snapshot.players.find(p => p.id === playerId);
   for (const entity of [...snapshot.players, ...snapshot.mobs]) screenPosition(entity, dt);
-  const position = self ? renderPositions.get(self.id) : { x: 430, y: 440 };
-  camera = cameraView(position, width, height, zoom, CONFIG.width, CONFIG.height);
+  const position = self ? renderPositions.get(self.id) : { x: world.w / 2, y: world.h / 2 };
+  camera = cameraView(position, width, height, zoom, world.w, world.h);
   ctx.save(); ctx.scale(camera.scale, camera.scale); ctx.translate(-camera.x, -camera.y);
-  drawTerrain(ctx, CONFIG, ZONES, MERCHANT, camera, width, height); telegraphs(time);
-  for (const l of snapshot.loot) { shadow(l.x, l.y, 7); ctx.fillStyle = l.item.startsWith('seed') ? '#a4cf72' : l.item === 'crystal' ? '#83d2d3' : '#d7c8a3'; ctx.fillRect(l.x - 5, l.y - 6 + Math.sin(time * 3) * 2, 10, 9); ctx.fillStyle = '#edf3c1'; ctx.fillRect(l.x - 2, l.y - 8, 4, 3); }
+  if (onNamek) {
+    drawTerrain(ctx, CONFIG, ZONES, MERCHANT, camera, width, height); telegraphs(time);
+    for (const l of snapshot.loot) { shadow(l.x, l.y, 7); ctx.fillStyle = l.item.startsWith('seed') ? '#a4cf72' : l.item === 'crystal' ? '#83d2d3' : '#d7c8a3'; ctx.fillRect(l.x - 5, l.y - 6 + Math.sin(time * 3) * 2, 10, 9); ctx.fillStyle = '#edf3c1'; ctx.fillRect(l.x - 2, l.y - 8, 4, 3); }
+  } else {
+    // Planeta Terra: gramado verde limpo e seguro (tela inicial).
+    ctx.fillStyle = '#5a8f3c'; ctx.fillRect(0, 0, world.w, world.h);
+    ctx.strokeStyle = '#3c6428'; ctx.lineWidth = 12; ctx.strokeRect(0, 0, world.w, world.h);
+  }
   const drawables = [
-    ...OBSTACLES.map(o => ({ y: o.y, draw: () => { if (o.type === 'tree') { shadow(o.x, o.y, o.r); if (!drawTree(ctx, o)) ctx.drawImage(sprites.tree, o.x - 61, o.y - 116, 122, 130); } else if (!drawRock(ctx, o)) { shadow(o.x, o.y, o.r); ctx.drawImage(sprites.rock, o.x - o.r, o.y - o.r * 1.15, o.r * 2, o.r * 1.7); } } })),
-    { y: MERCHANT.y, draw: () => drawVendor(ctx, MERCHANT) },
+    ...(onNamek ? OBSTACLES.map(o => ({ y: o.y, draw: () => { if (o.type === 'tree') { shadow(o.x, o.y, o.r); if (!drawTree(ctx, o)) ctx.drawImage(sprites.tree, o.x - 61, o.y - 116, 122, 130); } else if (!drawRock(ctx, o)) { shadow(o.x, o.y, o.r); ctx.drawImage(sprites.rock, o.x - o.r, o.y - o.r * 1.15, o.r * 2, o.r * 1.7); } } })) : []),
+    ...(onNamek ? [{ y: MERCHANT.y, draw: () => drawVendor(ctx, MERCHANT) }] : []),
     ...snapshot.players.map(p => ({ y: renderPositions.get(p.id).y, draw: () => drawPlayer(p, renderPositions.get(p.id), time) })),
     ...snapshot.mobs.map(m => ({ y: renderPositions.get(m.id).y, draw: () => drawMob(m, renderPositions.get(m.id), time) }))
   ].sort((a, b) => a.y - b.y);
@@ -348,7 +360,7 @@ function frame(now) {
     if (s.kind === 'genki') { ctx.save(); const glow = ctx.createRadialGradient(px, py, 3, px, py, 29); glow.addColorStop(0, '#ffffff'); glow.addColorStop(.28, '#c4f7ff'); glow.addColorStop(.7, '#5cbbff'); glow.addColorStop(1, '#a152ff00'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px, py, 29, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     else { ctx.strokeStyle = s.ownerType === 'player' ? '#b7edff' : '#f3ba8d'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px - s.dx * 12, py - s.dy * 12); ctx.lineTo(px, py); ctx.stroke(); ctx.lineCap = 'butt'; }
   }
-  effects(time); ctx.restore(); drawMinimap(); requestAnimationFrame(frame);
+  effects(time); ctx.restore(); drawMinimap(onNamek, world); requestAnimationFrame(frame);
 }
 resize(); requestAnimationFrame(frame);
 const previousToken = sessionStorage.getItem('dbi-session') || localStorage.getItem('dbi-last-session');
