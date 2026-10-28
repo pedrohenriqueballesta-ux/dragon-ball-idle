@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, PLANETS } from '../public/shared/index.mjs';
-import { podeAndar } from '../public/shared/passagem.mjs';
+import { podeAndar, emTerra } from '../public/shared/passagem.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });
 
@@ -51,5 +51,48 @@ test('a predição do cliente para na beira da água no mesmo ponto que o servid
   assert.ok(p.x > 900 && p.x < 1100, 'parou no mar a leste da Vila, não na borda do mapa');
   // Encostado na água, a predição não pode avançar mais do que o servidor aceitaria.
   const [px, py] = deslocar('namek', p.x, p.y, 1, 0, p.stats.mobility * 0.2);
+  assert.deepEqual([px, py], [p.x, p.y]);
+});
+
+test('casas da Vila bloqueiam pela base, ficam em terra e não tapam a chegada nem o mercador', async () => {
+  const { HOUSES, MERCHANT } = await import('../public/shared/config.mjs');
+  assert.ok(HOUSES.length >= 4);
+  for (const c of HOUSES) {
+    assert.equal(podeAndar('namek', c.x, c.y - c.w * 0.15), false, 'meio da base da casa ' + c.sprite + ' bloqueia');
+    assert.equal(podeAndar('namek', c.x, c.y + 20), true, 'frente da porta da casa ' + c.sprite + ' fica livre');
+  }
+  const { x, y } = PLANETS.namek.spawn;
+  assert.equal(podeAndar('namek', x, y), true);
+  assert.equal(podeAndar('namek', MERCHANT.x, MERCHANT.y), true);
+});
+
+test('casas da Vila ficam em solo firme, longe da beira da água', async () => {
+  const { HOUSES } = await import('../public/shared/config.mjs');
+  for (const c of HOUSES) for (let dx = -c.w * 0.6; dx <= c.w * 0.6; dx += 20) for (const dy of [-c.w * 0.5, 0, c.w * 0.3])
+    assert.ok(emTerra('namek', c.x + dx, c.y + dy), 'casa ' + c.sprite + ' perto da água em ' + Math.round(dx) + ',' + Math.round(dy));
+});
+
+test('casas destruídas ficam no Campo de Batalha, em terra, longe do chefe', async () => {
+  const { HOUSES, ZONES } = await import('../public/shared/config.mjs');
+  const campo = ZONES.find(z => z.id === 'cratera'), ruinas = HOUSES.filter(c => c.ruina);
+  assert.equal(ruinas.length, 6);
+  const game = new Game({ now: 1000, random: () => 0.5 }), chefe = [...game.mobs.values()].find(m => m.type === 'boss');
+  for (const c of ruinas) {
+    assert.ok(c.x > campo.x && c.x < campo.x + campo.w && c.y > campo.y && c.y < campo.y + campo.h, 'ruína ' + c.sprite + ' fora do Campo de Batalha');
+    assert.ok(emTerra('namek', c.x, c.y));
+    assert.ok(Math.hypot(c.x - chefe.x, c.y - chefe.y) > c.w / 2 + 200, 'ruína ' + c.sprite + ' em cima do chefe');
+  }
+  for (const m of game.mobs.values()) assert.equal(podeAndar('namek', m.x, m.y), true, m.name + ' nasceu dentro de uma casa');
+});
+
+test('encostado numa casa, a predição do cliente para no mesmo ponto que o servidor', async () => {
+  const { deslocar } = await import('../public/shared/passagem.mjs');
+  const { HOUSES } = await import('../public/shared/config.mjs');
+  const casa = HOUSES.find(c => !c.ruina && c.sprite === 5), game = world(), p = game.addPlayer('a');
+  // Vem de baixo, pela frente da casa, ao lado da porta, e anda para cima até a parede.
+  p.planet = 'namek'; p.x = casa.x - casa.w * 0.3; p.y = casa.y + 40;
+  for (let i = 0; i < 100; i++) { game.setInput(p.id, { x: 0, y: -1 }); game.tick(0.05); }
+  assert.ok(p.y > casa.y - 6 && p.y < casa.y + 20, 'parou na base da casa (y=' + Math.round(p.y) + ')');
+  const [px, py] = deslocar('namek', p.x, p.y, 0, -1, p.stats.mobility * 0.2);
   assert.deepEqual([px, py], [p.x, p.y]);
 });

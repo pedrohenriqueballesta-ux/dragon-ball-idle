@@ -32,6 +32,8 @@ export const art = {
   gokuGolpe: loadImage(GOKU_GOLPE.file),
   ssjGolpe: loadImage(SSJ_GOLPE.file),
   namekSolo: loadImage('/assets/namek/solo.webp'),
+  namekCasas: Array.from({ length: 6 }, (_, i) => loadImage('/assets/namek/casas/casa_' + (i + 1) + '.png')),
+  namekRuinas: Array.from({ length: 6 }, (_, i) => loadImage('/assets/namek/ruinas/ruina_' + (i + 1) + '.png')),
   grass: loadImage('/assets/grass.png'),
   earth: loadImage('/assets/earth.png')
 };
