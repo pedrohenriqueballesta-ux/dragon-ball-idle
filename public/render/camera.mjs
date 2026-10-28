@@ -1,15 +1,33 @@
 // Camera and animation helpers do not change any server-authoritative rules.
-export const MIN_ZOOM = 0.65;
-export const MAX_ZOOM = 2;
+// Calibração da câmera, num lugar só. O campo de visão é medido em unidades do mundo, não em
+// pixels de tela: monitor grande vê o mesmo pedaço de mapa que um notebook, só que maior.
+// Referências do jogo: mob percebe o jogador a 300 (chefe a 460), Sentinela ataca de 235,
+// a caça solta o Kamehameha a até 400. Na visão padrão sobram ~375 para cima e para baixo.
+export const CAMERA = Object.freeze({
+  zoomMinimo: 0.8,                // mais afastado: ~1500×940 de mundo numa tela 16:10
+  zoomPadrao: 1,                  // ~1200×750 de mundo numa tela 16:10
+  zoomMaximo: 2,                  // mais perto: ~600×375
+  areaVisivel: 1200 * 750,        // área de mundo na tela com zoom 1, qualquer que seja a tela
+  ladoMaximo: 1300,               // teto do lado maior com zoom 1 (telas ultralargas e celular em pé)
+  ladoMinimo: 600                 // piso do lado menor com zoom 1: o combate sempre cabe (vence o teto)
+});
+export const MIN_ZOOM = CAMERA.zoomMinimo;
+export const MAX_ZOOM = CAMERA.zoomMaximo;
 export function clampZoom(value) {
-  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number.isFinite(value) ? value : 1));
+  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number.isFinite(value) ? value : CAMERA.zoomPadrao));
 }
 export function zoomFromWheel(current, delta, mode = 0) {
   const pixels = delta * (mode === 1 ? 16 : mode === 2 ? 600 : 1);
   return clampZoom(current * Math.exp(-pixels * 0.0012));
 }
+// Pixels de tela por unidade do mundo com zoom 1: mantém a área visível fixa e corta o lado
+// maior em telas muito largas ou altas, sem deixar o lado menor curto demais para o combate.
+export function baseScale(width, height) {
+  const porArea = Math.max(Math.sqrt(width * height / CAMERA.areaVisivel), Math.max(width, height) / CAMERA.ladoMaximo);
+  return Math.min(porArea, Math.min(width, height) / CAMERA.ladoMinimo);
+}
 export function cameraView(position, width, height, zoom, worldWidth, worldHeight) {
-  const scale = (width < 650 ? 0.9 : 1.05) * clampZoom(zoom);
+  const scale = baseScale(width, height) * clampZoom(zoom);
   const visibleWidth = width / scale, visibleHeight = height / scale;
   const axis = (value, extent, visible) => visible >= extent ? (extent - visible) / 2 : Math.max(0, Math.min(extent - visible, value - visible / 2));
   return { x: axis(position.x, worldWidth, visibleWidth), y: axis(position.y, worldHeight, visibleHeight), scale };

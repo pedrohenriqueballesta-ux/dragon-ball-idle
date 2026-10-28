@@ -1,12 +1,12 @@
 import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, zoneAt } from '../shared/index.mjs';
 import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
-import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
+import { CAMERA, clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
 const $ = id => document.getElementById(id);
 const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap'), mctx = mini.getContext('2d');
 const keys = new Set(), renderPositions = new Map(), seenEvents = new Set();
 let snapshot = null, session = '', playerId = '', eventSource = null, receivedAt = 0, width = 900, height = 600, ratio = 1;
-let camera = { x: 0, y: 0, scale: 1 }, zoom = 1, pointerAim = null, touchVector = { x: 0, y: 0 }, lastUI = 0, sendingInput = false;
+let camera = { x: 0, y: 0, scale: 1 }, zoom = CAMERA.zoomPadrao, pointerAim = null, touchVector = { x: 0, y: 0 }, lastUI = 0, sendingInput = false;
 let floating = [], lastFrame = performance.now(), connectionError = false, miniTick = 0;
 const integer = v => Math.round(v).toLocaleString('pt-BR');
 const clock = seconds => { const n = Math.max(0, Math.ceil(seconds)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
@@ -180,8 +180,8 @@ window.addEventListener('pagehide', () => {
 function setZoom(value) {
   zoom = clampZoom(value);
   $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
-  $('zoomOut').disabled = zoom <= 0.65;
-  $('zoomIn').disabled = zoom >= 2;
+  $('zoomOut').disabled = zoom <= CAMERA.zoomMinimo;
+  $('zoomIn').disabled = zoom >= CAMERA.zoomMaximo;
   // Do not keep an aim point derived from the old camera scale.
   pointerAim = null;
 }

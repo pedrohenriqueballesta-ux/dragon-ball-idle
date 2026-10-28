@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, spriteFacing, walkStep, DIRECTIONS, strikeFrame, mobStrikeProgress, advancePose } from '../public/render/camera.mjs';
+import { CAMERA, MIN_ZOOM, MAX_ZOOM, clampZoom, zoomFromWheel, cameraView, worldFromPointer, spriteFacing, walkStep, DIRECTIONS, strikeFrame, mobStrikeProgress, advancePose } from '../public/render/camera.mjs';
 
 test('roda do mouse aproxima para cima, afasta para baixo e respeita os limites', () => {
   assert.ok(zoomFromWheel(1, -120) > 1);
   assert.ok(zoomFromWheel(1, 120) < 1);
-  assert.equal(zoomFromWheel(2, -5000), 2);
-  assert.equal(zoomFromWheel(0.65, 5000), 0.65);
+  assert.equal(zoomFromWheel(1, -5000), MAX_ZOOM);
+  assert.equal(zoomFromWheel(1, 5000), MIN_ZOOM);
   assert.equal(zoomFromWheel(1, 3, 1), zoomFromWheel(1, 48, 0));
   assert.equal(clampZoom(NaN), 1);
 });
 
 test('câmera mantém a mira correta depois do zoom e respeita as bordas do mapa', () => {
   const character = { x: 1500, y: 900 };
-  for (const zoom of [0.65, 1, 2]) {
+  for (const zoom of [MIN_ZOOM, 1, MAX_ZOOM]) {
     const camera = cameraView(character, 1000, 600, zoom, 3300, 2200);
     const target = worldFromPointer(520, 330, { left: 20, top: 30 }, camera);
     assert.ok(Math.abs(target.x - character.x) < 1e-8);
@@ -67,4 +67,18 @@ test('a animação do mob preserva o instante de impacto e completa a recuperaç
   assert.equal(strikeFrame(mobStrikeProgress(strike, 101)), 8);
   assert.equal(strikeFrame(mobStrikeProgress(strike, 101.31)), 15);
   assert.equal(mobStrikeProgress(strike, 101.32), null);
+});
+
+test('o campo de visão é limitado em qualquer tela, mesmo no zoom mínimo', () => {
+  const telas = [[1366, 768], [1440, 900], [1920, 1080], [2560, 1440], [3840, 2160], [3440, 1440], [5120, 1440], [390, 844], [844, 390]];
+  for (const [w, h] of telas) {
+    const padrao = cameraView({ x: 2300, y: 1500 }, w, h, CAMERA.zoomPadrao, 4608, 3072);
+    const longe = cameraView({ x: 2300, y: 1500 }, w, h, CAMERA.zoomMinimo, 4608, 3072);
+    const vista = c => [w / c.scale, h / c.scale];
+    const [pw, ph] = vista(padrao), [lw, lh] = vista(longe);
+    // Na visão padrão dá para ver um mob que percebe o jogador (300) nas duas direções.
+    assert.ok(Math.min(pw, ph) / 2 >= 280, w + 'x' + h + ': visão padrão curta demais (' + Math.round(pw) + 'x' + Math.round(ph) + ')');
+    // Afastado ao máximo, no máximo 15% da área do mapa (antes chegava a 56% num monitor 2560x1440).
+    assert.ok(lw * lh <= 0.15 * 4608 * 3072, w + 'x' + h + ': afastamento mostra mapa demais (' + Math.round(lw) + 'x' + Math.round(lh) + ')');
+  }
 });
