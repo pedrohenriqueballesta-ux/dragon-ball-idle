@@ -1,14 +1,14 @@
 {
   "name": "dragon-ball-idle-prototipo",
-  "version": "0.3.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "Primeiro protótipo local de RPG idle com servidor multiplayer.",
+  "description": "Protótipo local de RPG idle com HUD integrada e animações multidirecionais.",
   "engines": { "node": ">=22" },
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs --host 0.0.0.0",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check server.mjs && node --check public/shared/config.mjs && node --check public/shared/math.mjs && node --check public/shared/characters.mjs && node --check public/shared/enemies.mjs && node --check public/shared/game.mjs && node --check public/shared/index.mjs && node --check public/client/game.mjs && node --check public/art/terrain.mjs && node --check public/art/atlas.mjs && node --check public/art/goku.mjs && node --check public/art/saibaman.mjs && node --check public/art/alien.mjs && node --check public/art/assets.mjs && node --check public/render/camera.mjs"
+    "check": "node --check server.mjs && node --check public/shared/config.mjs && node --check public/shared/math.mjs && node --check public/shared/characters.mjs && node --check public/shared/enemies.mjs && node --check public/shared/game.mjs && node --check public/shared/index.mjs && node --check public/client/game.mjs && node --check public/art/assets.mjs && node --check public/art/atlas.mjs && node --check public/art/terrain.mjs && node --check public/art/goku.mjs && node --check public/art/saibaman.mjs && node --check public/art/alien.mjs && node --check public/art/freeza.mjs && node --check public/art/index.mjs && node --check public/art/sprite-data.mjs && node --check public/render/camera.mjs"
   }
 }

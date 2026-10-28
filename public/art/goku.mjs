@@ -1,12 +1,13 @@
-// Desenho do Goku (forma base e Super Saiyajin), com caminhada e golpe.
+// Desenho do Goku (forma base e Super Saiyajin), com caminhada e golpe de 16 quadros.
 import { art, loaded } from './assets.mjs';
 import { drawWalk, drawAttack } from './atlas.mjs';
 
 export function drawGoku(ctx, player, pos, time, strikeProgress = null) {
   if (strikeProgress !== null && !player.dead && !player.charge &&
-      drawAttack(ctx, player.transformed ? 'ssj' : 'goku', pos, 70, 70, player.facing, strikeProgress)) return true;
-  if (player.moving && !player.dead && !player.charge && strikeProgress === null &&
-      drawWalk(ctx, player.transformed ? 'ssj' : 'goku', pos, 52, 70, player.facing, time)) return true;
+      drawAttack(ctx, player.transformed ? 'ssj' : 'goku', pos, 70, player.facing, strikeProgress)) return true;
+  if (player.charge && !player.dead &&
+      drawAttack(ctx, player.transformed ? 'ssj' : 'goku', pos, 70, player.facing, 3 / 16)) return true;
+  if (!player.dead && drawWalk(ctx, player.transformed ? 'ssj' : 'goku', pos, 70, player.facing, player.moving)) return true;
   if (!loaded(art.goku)) return false;
   const f = player.facing || { x: 0, y: 1 };
   const horizontal = Math.abs(f.x) > Math.abs(f.y) * 1.15;

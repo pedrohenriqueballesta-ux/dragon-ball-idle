@@ -5,7 +5,7 @@ export const CONFIG = Object.freeze({
   seedPotencies: [15, 30, 50, 100],
   itemWeights: { food: 0.35, ki: 0.2, seed15: 0.08, seed30: 0.08, seed50: 0.08, seed100: 0.08, scrap: 0.7, crystal: 0.45 },
   prices: { food: 12, ki: 18, seed15: 90, seed30: 210, seed50: 480, seed100: 1400 },
-  skills: { ki: 2, dash: 2, kame: 3, transform: 5 }
+  skills: { ki: 2, dash: 2, kame: 3, kaioken: 2, barrier: 2, transform: 5, genki: 10 }
 });
 export const ZONES = [
   { id: 'vila', name: 'Vila do Lago', x: 70, y: 70, w: 650, h: 540, pvp: false },

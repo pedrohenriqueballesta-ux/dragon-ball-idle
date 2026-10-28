@@ -1,0 +1,1 @@
+Referências visuais de biomas fornecidas para o projeto. As pranchas são mantidas como referências de arte; não são usadas como imagem de fundo do jogo. Os sprites jogáveis continuam sendo desenhados individualmente pelo motor existente. Para substituir cada objeto do mapa, recorte e integre sprites individuais com transparência.

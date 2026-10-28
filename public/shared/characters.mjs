@@ -34,6 +34,7 @@ export function createPlayer(id, name = 'Guerreiro', saved = null, now = 0) {
     moving: false, moveTo: null, seedSelected: 15, foodUntil: Number(saved?.foodUntil) || 0,
     seedReady: Number(saved?.seedReady) || 0, kiReady: Number(saved?.kiReady) || 0,
     basicReady: 0, shotReady: 0, kameReady: 0, dashReady: 0, dashUntil: 0, charge: null,
+    kaiokenReady: 0, kaiokenUntil: 0, barrierReady: 0, barrierUntil: 0, genkiReady: 0, transformReady: 0,
     transformed: false, respawnAt: 0, connected: true, autoFood: true, autoKi: false, autoSeed: false,
     lastBagNotice: 0, bossKills: Number(saved?.bossKills) || 0 };
 }

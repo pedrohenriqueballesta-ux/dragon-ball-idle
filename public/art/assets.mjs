@@ -1,6 +1,12 @@
-// Registro de imagens (sprites e texturas). As artes são separadas da
-// simulação autoritativa, que vive em shared/.
-const loadImage = url => { const image = new Image(); image.src = url; return image; };
+// Registro de imagens (sprites e texturas). A arte é separada da simulação
+// autoritativa, que vive em shared/.
+import { SPRITE_DATA } from './sprite-data.mjs';
+
+const imageCache = new Map();
+const loadImage = url => {
+  if (!imageCache.has(url)) { const image = new Image(); image.src = url; imageCache.set(url, image); }
+  return imageCache.get(url);
+};
 export const art = {
   goku: loadImage('/assets/goku-sheet.png'),
   tree: loadImage('/assets/tree.png'),
@@ -8,14 +14,9 @@ export const art = {
   alien: loadImage('/assets/alien.png'),
   vendor: loadImage('/assets/vendor.png'),
   saibaman: loadImage('/assets/saibaman.png'),
-  gokuWalk: loadImage('/assets/goku-walk.png'),
-  ssjWalk: loadImage('/assets/ssj-walk.png'),
-  saibamanWalk: loadImage('/assets/saibaman-walk.png'),
-  alienWalk: loadImage('/assets/alien-walk.png'),
-  gokuAttack: loadImage('/assets/goku-attack.png'),
-  ssjAttack: loadImage('/assets/ssj-attack.png'),
-  saibamanAttack: loadImage('/assets/saibaman-attack.png'),
-  alienAttack: loadImage('/assets/alien-attack.png'),
+  freezaBoss: loadImage('/assets/freeza-boss.png'),
+  freezaFrames: Array.from({ length: 16 }, (_, i) => loadImage('/assets/freeza/freeza_idle_view' + (Math.floor(i / 4) + 1) + '_frame' + ((i % 4) + 1) + '.png')),
+  ...Object.fromEntries(Object.entries(SPRITE_DATA).map(([key, data]) => [key, loadImage(data.file)])),
   grass: loadImage('/assets/grass.png'),
   earth: loadImage('/assets/earth.png')
 };

@@ -1,32 +1,36 @@
-// Recorte dos sprite sheets de caminhada e ataque, compartilhado por Goku e inimigos.
+// Recorte dos sprite sheets de 16 quadros (caminhada e ataque), em 8 direções.
+// Compartilhado por Goku e inimigos. Usa vistas diagonais quando existem.
 import { art, loaded } from './assets.mjs';
-import { spriteFacing, walkStep } from '../render/camera.mjs';
+import { spriteFacing, walkStep, strikeFrame } from '../render/camera.mjs';
+import { SPRITE_DATA } from './sprite-data.mjs';
 
-const WALK_ATLASES = {
-  goku: { image: art.gokuWalk, x: [100, 530, 980, 1420], w: [285, 285, 285, 280], y: [45, 475], h: 405 },
-  ssj: { image: art.ssjWalk, x: [100, 530, 980, 1420], w: [285, 285, 285, 280], y: [45, 475], h: 405 },
-  saibaman: { image: art.saibamanWalk, x: [105, 525, 955, 1380], w: [305, 305, 285, 285], y: [22, 450], h: 422 },
-  alien: { image: art.alienWalk, x: [150, 530, 950, 1338], w: [310, 310, 270, 280], y: [10, 450], h: 430 }
-};
-const ATTACK_ATLASES = {
-  goku: { image: art.gokuAttack, x: [90, 485, 930, 1350], w: [315, 330, 365, 380], y: [45, 465], h: 410 },
-  ssj: { image: art.ssjAttack, x: [90, 485, 930, 1350], w: [315, 330, 365, 380], y: [45, 465], h: 410 },
-  saibaman: { image: art.saibamanAttack, x: [65, 480, 880, 1335], w: [370, 385, 400, 400], y: [55, 465], h: 405 },
-  alien: { image: art.alienAttack, x: [150, 530, 950, 1360], w: [315, 350, 325, 365], y: [10, 450], h: 430 }
-};
-function drawAtlas(ctx, atlas, pos, width, height, facing, row) {
-  if (!loaded(atlas.image)) return false;
-  const { column, flip } = spriteFacing(facing);
+// Five distinct views, with the three opposite views mirrored for consistent anatomy.
+// Back-diagonal views use a rear three-quarter drawing, never a side/front substitute.
+const VIEWS = [
+  { row: 0, flip: false }, { row: 1, flip: false }, { row: 2, flip: false },
+  { row: 3, flip: false }, { row: 4, flip: false }, { row: 3, flip: true },
+  { row: 2, flip: true }, { row: 1, flip: true }
+];
+function drawAtlas(ctx, key, pos, height, facing, frame) {
+  const direction = spriteFacing(facing);
+  const diagonalKey = key.replace(/(Walk|Attack)$/, 'Diagonal$1');
+  const useDiagonal = direction % 2 === 1 && SPRITE_DATA[diagonalKey];
+  const selected = useDiagonal ? diagonalKey : key;
+  const data = SPRITE_DATA[selected], image = art[selected];
+  if (!loaded(image)) return false;
+  const { row, flip } = useDiagonal ? { row: direction === 1 || direction === 7 ? 0 : 1, flip: direction > 4 } : VIEWS[direction];
+  const [sx, sy, sw, sh, anchorX, anchorY] = data.frames[row][frame];
+  const scale = height / data.referenceHeight;
   ctx.save(); ctx.translate(Math.round(pos.x), Math.round(pos.y));
   if (flip) ctx.scale(-1, 1);
-  ctx.drawImage(atlas.image, atlas.x[column], atlas.y[row], atlas.w[column], atlas.h,
-    -width / 2, -height + 6, width, height);
+  ctx.drawImage(image, sx, sy, sw, sh,
+    (sx - anchorX) * scale, (sy - anchorY) * scale + 6, sw * scale, sh * scale);
   ctx.restore();
   return true;
 }
-export function drawWalk(ctx, kind, pos, width, height, facing, time, phase = 0) {
-  return drawAtlas(ctx, WALK_ATLASES[kind], pos, width, height, facing, walkStep(time, phase));
+export function drawWalk(ctx, kind, pos, height, facing, moving, stride = 96, phase = 0) {
+  return drawAtlas(ctx, kind + 'Walk', pos, height, facing, moving ? walkStep(pos.travelled || 0, stride, phase) : 0);
 }
-export function drawAttack(ctx, kind, pos, width, height, facing, progress) {
-  return drawAtlas(ctx, ATTACK_ATLASES[kind], pos, width, height, facing, progress < 0.5 ? 0 : 1);
+export function drawAttack(ctx, kind, pos, height, facing, progress) {
+  return drawAtlas(ctx, kind + 'Attack', pos, height, facing, strikeFrame(progress));
 }

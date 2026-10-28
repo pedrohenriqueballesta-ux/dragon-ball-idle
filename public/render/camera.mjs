@@ -1,4 +1,4 @@
-// Câmera e helpers de animação. Não alteram nenhuma regra autoritativa do servidor.
+// Camera and animation helpers do not change any server-authoritative rules.
 export const MIN_ZOOM = 0.65;
 export const MAX_ZOOM = 2;
 export function clampZoom(value) {
@@ -17,9 +17,46 @@ export function cameraView(position, width, height, zoom, worldWidth, worldHeigh
 export function worldFromPointer(x, y, rect, camera) {
   return { x: (x - rect.left) / camera.scale + camera.x, y: (y - rect.top) / camera.scale + camera.y };
 }
+export const ANIMATION_FRAMES = 16;
+// Clockwise in screen coordinates, starting at the bottom of the map.
+export const DIRECTIONS = Object.freeze([
+  { id: 's', label: 'Sul', x: 0, y: 1 },
+  { id: 'sw', label: 'Sudoeste', x: -1, y: 1 },
+  { id: 'w', label: 'Oeste', x: -1, y: 0 },
+  { id: 'nw', label: 'Noroeste', x: -1, y: -1 },
+  { id: 'n', label: 'Norte', x: 0, y: -1 },
+  { id: 'ne', label: 'Nordeste', x: 1, y: -1 },
+  { id: 'e', label: 'Leste', x: 1, y: 0 },
+  { id: 'se', label: 'Sudeste', x: 1, y: 1 }
+]);
 export function spriteFacing(facing) {
-  const { x = 0, y = 1 } = facing || {};
-  if (Math.abs(x) > Math.abs(y) * 1.15) return { column: 3, flip: x < 0 };
-  return { column: y < 0 ? 1 : 0, flip: false };
+  const x = Number.isFinite(facing?.x) ? facing.x : 0;
+  const y = Number.isFinite(facing?.y) ? facing.y : 1;
+  if (Math.hypot(x, y) < 0.0001) return 0;
+  return (Math.round((Math.atan2(y, x) - Math.PI / 2) / (Math.PI / 4)) + 8) % 8;
 }
-export const walkStep = (time, phase = 0) => Math.floor(time * 7 + phase) % 2;
+// Travel, rather than wall-clock time, drives gait: a blocked actor cannot walk in place.
+export function walkStep(travelled, stride = 96, phase = 0) {
+  const cycle = ((travelled / stride + phase) % 1 + 1) % 1;
+  return Math.floor(cycle * ANIMATION_FRAMES) % ANIMATION_FRAMES;
+}
+export function strikeFrame(progress) {
+  return Math.min(ANIMATION_FRAMES - 1, Math.max(0, Math.floor(progress * ANIMATION_FRAMES)));
+}
+// Half the frames anticipate the existing impact; the other half finish and recover.
+export function mobStrikeProgress(strike, time) {
+  if (!strike || time < strike.started || time >= strike.until) return null;
+  if (time < strike.release) return 0.5 * (time - strike.started) / (strike.release - strike.started);
+  return 0.5 + 0.5 * (time - strike.release) / (strike.until - strike.release);
+}
+export function advancePose(previous, entity, dt, local = false) {
+  const teleport = !previous || Math.hypot(previous.x - entity.x, previous.y - entity.y) > 250;
+  const pose = teleport ? { x: entity.x, y: entity.y, facing: entity.facing || { x: 0, y: 1 }, travelled: 0 } : previous;
+  const factor = Math.min(1, Math.max(0, dt) * (local ? 23 : 13));
+  const dx = (entity.x - pose.x) * factor, dy = (entity.y - pose.y) * factor;
+  pose.x += dx; pose.y += dy;
+  if (entity.moving) pose.travelled += Math.hypot(dx, dy);
+  if (entity.facing) pose.facing = entity.facing;
+  else if (entity.moving && Math.hypot(dx, dy) > 0.05) pose.facing = { x: dx, y: dy };
+  return pose;
+}

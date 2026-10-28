@@ -1,5 +1,7 @@
-// Ponto de entrada da arte: reúne cenário e personagens para o cliente.
+// Ponto de entrada da arte: reúne registro de imagens, cenário e personagens.
+export { art } from './assets.mjs';
 export { CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor } from './terrain.mjs';
 export { drawGoku } from './goku.mjs';
 export { drawSaibaman } from './saibaman.mjs';
 export { drawAlien } from './alien.mjs';
+export { drawFreeza } from './freeza.mjs';

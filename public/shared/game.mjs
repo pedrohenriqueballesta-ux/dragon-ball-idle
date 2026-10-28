@@ -22,7 +22,8 @@ export class Game {
   addMob(type, x, y, zone = 'campos') {
     const info = mobStats(type, zone);
     const m = { id: this.uid('m'), type, zone, x, y, homeX: x, homeY: y, ...info, maxHp: info.hp,
-      attackReady: this.time + 1, telegraph: null, deadUntil: 0, moving: false };
+      attackReady: this.time + 1, telegraph: null, deadUntil: 0, moving: false,
+      facing: { x: 0, y: 1 }, strike: null };
     this.mobs.set(m.id, m); return m;
   }
   populate() {
@@ -94,8 +95,11 @@ export class Game {
     if (kind === 'sell') return this.sell(p);
     if (kind === 'transform') {
       if (p.level < CONFIG.skills.transform) return this.reject(p, 'Super Saiyajin libera no nível ' + CONFIG.skills.transform + '.');
-      if (p.ki < 10 && !p.transformed) return this.reject(p, 'Ki insuficiente para transformar.');
-      p.transformed = !p.transformed; this.notify(p, p.transformed ? 'Super Saiyajin ativado!' : 'Forma base.'); return { ok: true };
+      if (p.transformed) { p.transformed = false; this.notify(p, 'Forma base.'); return { ok: true }; }
+      if (this.time < p.transformReady) return this.reject(p, 'Super Saiyajin em recarga: ' + Math.ceil(p.transformReady - this.time) + 's.');
+      if (p.ki < 10) return this.reject(p, 'Ki insuficiente para transformar.');
+      p.transformed = true; p.ki -= 10; p.transformReady = this.time + 45;
+      this.notify(p, 'Super Saiyajin ativado!'); return { ok: true };
     }
     if (kind === 'skill') return this.cast(p, data.skill);
     return { ok: false, reason: 'Ação inválida.' };
@@ -151,7 +155,7 @@ export class Game {
       p.basicReady = this.time + 0.45;
       const dir = this.aimDirection(p, target); p.facing = dir;
       this.emit('punch', { x: p.x, y: p.y, dx: dir.x, dy: dir.y, playerId: p.id });
-      if (target && distance(p, target) <= 70) this.hit(p, target, p.stats.attack * (p.transformed ? 1.5 : 1));
+      if (target && distance(p, target) <= 70) this.hit(p, target, p.stats.attack * (p.transformed ? 1.5 : 1) * (this.time < p.kaiokenUntil ? 1.4 : 1));
       return { ok: true };
     }
     if (skill === 'dash') {
@@ -166,14 +170,34 @@ export class Game {
       p.ki -= 7; p.shotReady = this.time + 0.7;
       const dir = this.aimDirection(p, target); p.facing = dir;
       this.projectiles.push({ id: this.uid('s'), x: p.x, y: p.y, dx: dir.x, dy: dir.y, speed: 470,
-        owner: p.id, ownerType: 'player', damage: p.stats.attack * (p.transformed ? 2.1 : 1.4), ttl: 0.95 });
+        owner: p.id, ownerType: 'player', damage: p.stats.attack * (p.transformed ? 2.1 : 1.4) * (this.time < p.kaiokenUntil ? 1.4 : 1), ttl: 0.95, kind: 'ki' });
       return { ok: true };
     }
     if (skill === 'kame') {
       if (p.level < CONFIG.skills.kame) return automated ? { ok: false } : this.reject(p, 'Kamehameha libera no nível 3.');
-      if (p.charge || this.time < p.kameReady || p.ki < 23) return { ok: false };
+      if (p.charge || this.time < p.kameReady || p.ki < 23) return automated ? { ok: false } : this.reject(p, 'Kamehameha em recarga ou Ki insuficiente.');
       const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= 23; p.kameReady = this.time + 5;
       p.charge = { until: this.time + 0.65, direction: dir }; return { ok: true };
+    }
+    if (skill === 'kaioken') {
+      if (p.level < CONFIG.skills.kaioken) return automated ? { ok: false } : this.reject(p, 'Kaioken libera no nível 2.');
+      if (this.time < p.kaiokenReady || this.time < p.kaiokenUntil || p.ki < 12) return automated ? { ok: false } : this.reject(p, 'Kaioken em recarga ou Ki insuficiente.');
+      p.ki -= 12; p.kaiokenUntil = this.time + 6; p.kaiokenReady = this.time + 12.5;
+      this.emit('kaioken', { x: p.x, y: p.y, playerId: p.id }); this.notify(p, 'Kaioken ativado por 6 segundos!'); return { ok: true };
+    }
+    if (skill === 'barrier') {
+      if (p.level < CONFIG.skills.barrier) return automated ? { ok: false } : this.reject(p, 'Barreira de Ki libera no nível 2.');
+      if (this.time < p.barrierReady || p.ki < 10) return automated ? { ok: false } : this.reject(p, 'Barreira em recarga ou Ki insuficiente.');
+      p.ki -= 10; p.barrierUntil = this.time + 2.5; p.barrierReady = this.time + 8.1;
+      this.emit('barrier', { x: p.x, y: p.y, playerId: p.id }); this.notify(p, 'Barreira de Ki ativada!'); return { ok: true };
+    }
+    if (skill === 'genki') {
+      if (p.level < CONFIG.skills.genki) return automated ? { ok: false } : this.reject(p, 'Genki Dama libera no nível 10.');
+      if (this.time < p.genkiReady || p.ki < 60 || p.charge) return automated ? { ok: false } : this.reject(p, 'Genki Dama em recarga ou Ki insuficiente.');
+      const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= 60; p.genkiReady = this.time + 120;
+      this.projectiles.push({ id: this.uid('s'), x: p.x, y: p.y - 22, dx: dir.x, dy: dir.y, speed: 265,
+        owner: p.id, ownerType: 'player', damage: p.stats.attack * (p.transformed ? 14 : 10), ttl: 2.35, kind: 'genki', radius: 72 });
+      this.emit('genki', { x: p.x, y: p.y, dx: dir.x, dy: dir.y, playerId: p.id }); return { ok: true };
     }
     return { ok: false };
   }
@@ -185,7 +209,8 @@ export class Game {
       if (this.time < target.dashUntil) return false;
     }
     const defense = playerTarget ? target.stats.defense : target.zone === 'cratera' ? 5 : 1;
-    const damage = Math.max(1, Math.round(raw * 100 / (100 + defense * 3)));
+    const guardedRaw = playerTarget && this.time < target.barrierUntil ? raw * 0.28 : raw;
+    const damage = Math.max(1, Math.round(guardedRaw * 100 / (100 + defense * 3)));
     target.hp = Math.max(0, target.hp - damage);
     this.emit('damage', { x: target.x, y: target.y - 20, amount: damage, targetId: target.id });
     if (target.hp <= 0) {
@@ -208,7 +233,7 @@ export class Game {
       p.xp -= xpForLevel(p.level); p.level++; const old = p.stats; p.stats = statsFor(p.level);
       p.hp = Math.min(p.stats.hp, p.hp + p.stats.hp - old.hp); p.ki = Math.min(p.stats.ki, p.ki + p.stats.ki - old.ki);
       this.emit('level', { playerId: p.id, x: p.x, y: p.y, level: p.level });
-      const unlock = p.level === 2 ? ' Rajada de Ki e Imagem Residual liberadas!' : p.level === 3 ? ' Kamehameha liberado!' : p.level === 5 ? ' Super Saiyajin liberado!' : '';
+      const unlock = p.level === 2 ? ' Kaioken, Barreira de Ki e Imagem Residual liberados!' : p.level === 3 ? ' Kamehameha liberado!' : p.level === 5 ? ' Super Saiyajin liberado!' : p.level === 10 ? ' Genki Dama liberada!' : '';
       this.notify(p, 'Nível ' + p.level + '! Todos os atributos aumentaram.' + unlock);
     }
   }
@@ -268,8 +293,8 @@ export class Game {
     if (p.charge && this.time >= p.charge.until) {
       const dir = p.charge.direction, bx = p.x + dir.x * 440, by = p.y + dir.y * 440;
       this.emit('beam', { x: p.x, y: p.y, bx, by, playerId: p.id });
-      for (const m of this.mobs.values()) if (m.hp > 0 && segmentDistance(m.x, m.y, p.x, p.y, bx, by) < 35) this.hit(p, m, p.stats.attack * (p.transformed ? 6 : 4.2));
-      for (const other of this.players.values()) if (this.canPvp(p, other) && segmentDistance(other.x, other.y, p.x, p.y, bx, by) < 32) this.hit(p, other, p.stats.attack * (p.transformed ? 6 : 4.2));
+      for (const m of this.mobs.values()) if (m.hp > 0 && segmentDistance(m.x, m.y, p.x, p.y, bx, by) < 35) this.hit(p, m, p.stats.attack * (p.transformed ? 6 : 4.2) * (this.time < p.kaiokenUntil ? 1.4 : 1));
+      for (const other of this.players.values()) if (this.canPvp(p, other) && segmentDistance(other.x, other.y, p.x, p.y, bx, by) < 32) this.hit(p, other, p.stats.attack * (p.transformed ? 6 : 4.2) * (this.time < p.kaiokenUntil ? 1.4 : 1));
       p.charge = null;
     }
     for (const l of this.loot) if (!l.taken && (l.owner === p.id || this.time > l.until - 30) && distance(p, l) < CONFIG.pickupRadius) {
@@ -279,7 +304,7 @@ export class Game {
   }
   updateMob(m, dt) {
     m.moving = false;
-    if (m.hp <= 0) { if (this.time >= m.deadUntil) { m.hp = m.maxHp; m.x = m.homeX; m.y = m.homeY; m.attackReady = this.time + 1; } return; }
+    if (m.hp <= 0) { if (this.time >= m.deadUntil) { m.hp = m.maxHp; m.x = m.homeX; m.y = m.homeY; m.attackReady = this.time + 1; m.strike = null; } return; }
     let target = null, closest = m.type === 'boss' ? 460 : 300;
     for (const p of this.players.values()) {
       if (!p.connected || p.hp <= 0 || zoneAt(p.x, p.y)?.id === 'vila') continue;
@@ -303,6 +328,9 @@ export class Game {
     else if (this.time >= m.attackReady) {
       if (m.type === 'ranged') { const dir = norm(target.x - m.x, target.y - m.y); m.telegraph = { kind: 'shot', x: m.x, y: m.y, dx: dir.x, dy: dir.y, until: this.time + 0.8, started: this.time, radius: 25 }; }
       else m.telegraph = { kind: 'area', x: target.x, y: target.y, radius: m.type === 'boss' ? 125 : 43, until: this.time + (m.type === 'boss' ? 1.15 : 0.65), started: this.time };
+      m.facing = norm(target.x - m.x, target.y - m.y);
+      // Presentation timestamps only: impact, warning duration and cooldown are unchanged.
+      m.strike = { started: this.time, release: m.telegraph.until, until: m.telegraph.until + 0.32, direction: m.facing };
     }
   }
   tick(dt) {
@@ -317,8 +345,16 @@ export class Game {
       if (!owner) { s.ttl = 0; continue; }
       const targets = s.ownerType === 'player' ? [...this.mobs.values(), ...this.players.values()].filter(t => t.id !== owner.id) : [...this.players.values()].filter(p => p.connected && zoneAt(p.x, p.y)?.id !== 'vila');
       for (const t of targets) {
-        if (t.hp > 0 && segmentDistance(t.x, t.y, oldX, oldY, s.x, s.y) < 19) {
-          if (this.hit(owner, t, s.damage)) { s.ttl = 0; break; }
+        const hitRadius = s.kind === 'genki' ? 38 : 19;
+        if (t.hp > 0 && segmentDistance(t.x, t.y, oldX, oldY, s.x, s.y) < hitRadius) {
+          if (this.hit(owner, t, s.damage)) {
+            if (s.kind === 'genki') {
+              for (const splash of targets) {
+                if (splash.id !== t.id && splash.hp > 0 && distance(splash, t) <= (s.radius || 72)) this.hit(owner, splash, s.damage * 0.45);
+              }
+            }
+            s.ttl = 0; break;
+          }
         }
       }
     }
@@ -339,9 +375,12 @@ export class Game {
         foodRemaining: Math.max(0, self.foodUntil - this.time), seedRemaining: Math.max(0, self.seedReady - this.time),
         kiRemaining: Math.max(0, self.kiReady - this.time), seedSelected: self.seedSelected,
         kameRemaining: Math.max(0, self.kameReady - this.time), dashRemaining: Math.max(0, self.dashReady - this.time),
+        kaiokenRemaining: Math.max(0, self.kaiokenReady - this.time), kaiokenActive: this.time < self.kaiokenUntil,
+        barrierRemaining: Math.max(0, self.barrierReady - this.time), barrierActive: this.time < self.barrierUntil,
+        genkiRemaining: Math.max(0, self.genkiReady - this.time), transformRemaining: Math.max(0, self.transformReady - this.time),
         transformed: self.transformed, kills: self.kills, bossKills: self.bossKills,
         respawnRemaining: Math.max(0, self.respawnAt - this.time) } : null,
-      mobs: [...this.mobs.values()].filter(m => m.hp > 0).map(m => ({ id: m.id, type: m.type, zone: m.zone, name: m.name, x: m.x, y: m.y, hp: m.hp, maxHp: m.maxHp, moving: m.moving, telegraph: m.telegraph })),
+      mobs: [...this.mobs.values()].filter(m => m.hp > 0).map(m => ({ id: m.id, type: m.type, zone: m.zone, name: m.name, x: m.x, y: m.y, hp: m.hp, maxHp: m.maxHp, moving: m.moving, facing: m.facing, telegraph: m.telegraph, strike: m.strike && this.time < m.strike.until ? m.strike : null })),
       projectiles: this.projectiles, loot: this.loot, events: this.events.filter(e => !e.playerId || e.playerId === id || e.type !== 'message') };
   }
 }

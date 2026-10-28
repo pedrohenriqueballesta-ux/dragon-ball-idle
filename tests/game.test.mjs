@@ -75,6 +75,43 @@ test('movimento manual interrompe a caça e desconexão suspende evolução AFK'
   advance(game, 5); assert.equal(p.hp, 20);
 });
 
+test('teclado e condução automática mantêm velocidade igual nas quatro diagonais', () => {
+  for (const [x, y] of [[1, -1], [-1, -1], [1, 1], [-1, 1], [1, 0]]) {
+    const game = world(), p = game.addPlayer('a'); p.x = 1650; p.y = 700;
+    const origin = { x: p.x, y: p.y };
+    game.setInput(p.id, { x, y }); game.tick(0.1);
+    assert.ok(Math.abs(Math.hypot(p.x - origin.x, p.y - origin.y) - p.stats.mobility * 0.1) < 1e-8);
+    assert.equal(Math.sign(p.x - origin.x), x);
+    assert.equal(Math.sign(p.y - origin.y), y);
+    const direction = game.snapshot(p.id).players[0].facing;
+    assert.equal(Math.sign(direction.x), x); assert.equal(Math.sign(direction.y), y);
+    const mob = game.addMob('melee', 1650, 700);
+    game.steer(mob, { x: mob.x + x * 100, y: mob.y + y * 100 }, 0.1, mob.speed);
+    assert.ok(Math.abs(Math.hypot(mob.x - 1650, mob.y - 700) - mob.speed * 0.1) < 1e-8);
+    assert.equal(Math.sign(mob.facing.x), x); assert.equal(Math.sign(mob.facing.y), y);
+  }
+});
+
+test('Saibaman, sentinela e chefe transmitem direção e recuperação sem antecipar o dano', () => {
+  for (const type of ['melee', 'ranged', 'boss']) {
+    const game = world(), p = game.addPlayer('a'); p.x = 1650; p.y = 700;
+    const mob = game.addMob(type, 1625, 725); mob.attackReady = game.time;
+    game.tick(0.05);
+    const view = game.snapshot(p.id).mobs[0];
+    assert.ok(view.facing.x > 0 && view.facing.y < 0);
+    assert.equal(view.strike.release, view.telegraph.until);
+    assert.equal(p.hp, p.stats.hp, 'aviso não causa dano');
+    const release = view.strike.release;
+    game.time = release - 0.01; game.tick(0.01);
+    const recovery = game.snapshot(p.id).mobs[0];
+    assert.equal(recovery.telegraph, null);
+    assert.ok(recovery.strike.until > game.time, 'a recuperação continua após o golpe');
+    assert.equal(recovery.strike.release, release);
+    if (type !== 'ranged') assert.ok(p.hp < p.stats.hp);
+    else assert.ok(game.projectiles.some(s => s.owner === mob.id));
+  }
+});
+
 test('transformação exige nível e termina quando o Ki acaba', () => {
   const game = world(), low = game.addPlayer('a'), high = game.addPlayer('b', 'Goku', { level: 5 });
   assert.equal(game.action(low.id, { type: 'transform' }).ok, false);
@@ -123,4 +160,44 @@ test('duas sessões HTTP reais recebem o mundo compartilhado e entradas não alt
     const unauthorized = await post('/api/action', { type: 'seed' }, 'inventado');
     assert.equal(unauthorized.status, 401);
   } finally { controllers.forEach(c => c.abort()); await app.close(); }
+});
+
+test('Kaioken e Barreira de Ki têm níveis de desbloqueio, duração e recarga', () => {
+  const game = world(), p = game.addPlayer('power', 'Goku', { level: 1 });
+  assert.equal(game.cast(p, 'kaioken').ok, false);
+  assert.equal(game.cast(p, 'barrier').ok, false);
+  game.awardXp(p, xpForLevel(1));
+  assert.equal(p.level, 2);
+  const kiBefore = p.ki;
+  assert.equal(game.cast(p, 'kaioken').ok, true);
+  assert.equal(p.ki, kiBefore - 12);
+  assert.equal(game.snapshot(p.id).self.kaiokenActive, true);
+  assert.equal(game.cast(p, 'kaioken').ok, false, 'Kaioken não pode ser empilhado durante a duração');
+  advance(game, 6.1);
+  assert.equal(game.snapshot(p.id).self.kaiokenActive, false);
+  assert.ok(game.snapshot(p.id).self.kaiokenRemaining > 0, 'a recarga continua após o efeito terminar');
+
+  const defended = world(), dp = defended.addPlayer('defended', 'Goku', { level: 2 });
+  const attacker = defended.addMob('melee', dp.x + 20, dp.y);
+  const hpBefore = dp.hp;
+  assert.equal(defended.cast(dp, 'barrier').ok, true);
+  assert.equal(defended.hit(attacker, dp, 30), true);
+  const mitigated = hpBefore - dp.hp;
+  assert.ok(mitigated > 0 && mitigated < 30, 'a barreira reduz o dano recebido');
+  assert.equal(defended.snapshot(dp.id).self.barrierActive, true);
+});
+
+test('Genki Dama só libera no nível 10 e atinge o alvo com projétil de área', () => {
+  const game = world(), p = game.addPlayer('ultimate', 'Goku', { level: 9 });
+  assert.equal(game.cast(p, 'genki').ok, false);
+  game.awardXp(p, xpForLevel(9));
+  assert.equal(p.level, 10);
+  const target = game.addMob('melee', p.x + 35, p.y - 22);
+  const kiBefore = p.ki;
+  assert.equal(game.cast(p, 'genki').ok, true);
+  assert.equal(p.ki, kiBefore - 60);
+  assert.ok(game.snapshot(p.id).self.genkiRemaining > 119);
+  advance(game, 0.45);
+  assert.equal(target.hp, 0, 'o projétil da Genki Dama deve acertar o alvo próximo');
+  assert.equal(game.cast(p, 'genki').ok, false, 'a técnica deve respeitar a recarga de 120 segundos');
 });

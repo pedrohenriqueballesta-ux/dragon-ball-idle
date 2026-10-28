@@ -388,3 +388,12 @@ A versão 0.3 inclui ciclos de dois quadros com pernas alternadas para Goku na f
 As estradas e junções têm bordas suavizadas, as rochas receberam sombra de contato e posicionamento junto ao solo, e a barra usa menos espaço horizontal com atalhos maiores. A roda do mouse sobre o mapa aproxima e afasta; botões de mais e menos também controlam o zoom. A câmera e a conversão do clique acompanham o zoom.
 
 As regras do servidor foram mantidas. Os 13 testes automatizados passaram; no navegador desktop, foram observados passos e direção, caça, zoom pela roda e seleção de um mob com o mapa ampliado. Um salvamento real criado pela versão 0.2 foi recuperado na 0.3 com nível, XP e inventário. Não houve teste em aparelho de toque físico nesta versão.
+
+
+## 14. Dezesseis quadros e diagonais — protótipo 0.4
+
+O usuário pediu 16 quadros para todos os mobs e ajuste de sprites e movimentação nas diagonais nordeste, noroeste, sudeste e sudoeste. A versão 0.4 usa 16 quadros por ciclo de caminhada e ataque básico para Saibaman, Sentinela e Guardião da Cratera, além de Goku e Super Saiyajin. As diagonais receberam vistas específicas em três quartos; os lados opostos são espelhados para consistência.
+
+Os passos acompanham a distância realmente percorrida e deixam de avançar sem deslocamento. O servidor transmite a orientação dos mobs e os instantes de preparação, impacto e recuperação. A velocidade nas diagonais é normalizada, e os tempos de aviso, dano, recarga, evolução e cura foram preservados. O Guardião continua usando a identidade visual ampliada da Sentinela.
+
+A tela local /animacoes.html permite selecionar caminhada, ataque ou repouso, avançar pelos 16 quadros e comparar as oito direções sem alterar o progresso. As regras e a apresentação passaram por 19 testes automatizados e verificação de sintaxe. As vistas em três quartos e quadros de caminhada e golpe foram inspecionados no navegador desktop; a caça permaneceu ativa e houve passagem do nível 13 para o 14. Um salvamento real 0.3 foi recuperado na 0.4 com sessão, nível, XP e itens preservados. Morte, esquiva e uso de itens ainda não têm sequências próprias de 16 quadros; não houve teste em aparelho de toque físico nem carga de produção.

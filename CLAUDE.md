@@ -1,4 +1,3 @@
 # Instruções do projeto
 
-Leia AGENTS.md, LEIA_PRIMEIRO.md e docs/CONCEITO.md antes de alterar o jogo. Execute npm test e npm run check depois de modificar regras. O protótipo roda com npm start, sem instalar bibliotecas.
-
+Leia docs/PASSAGEM_CLAUDE.md, AGENTS.md, LEIA_PRIMEIRO.md e docs/CONCEITO.md antes de alterar o jogo. Preserve a distinção entre decisões e valores provisórios. Rode npm run check e npm test após mudanças. Use npm start; não há dependências para instalar nem etapa de build. Não sobrescreva data/save.json. O pacote idle-dbz-assets não está integrado nesta base.

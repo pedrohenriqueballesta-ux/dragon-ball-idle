@@ -1,6 +1,6 @@
 import { CONFIG, ZONES, OBSTACLES, MERCHANT, zoneAt } from '../shared/index.mjs';
-import { CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku } from '../art/index.mjs';
-import { clampZoom, zoomFromWheel, cameraView, worldFromPointer } from '../render/camera.mjs';
+import { art, CLEARINGS, drawTerrain, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
+import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
 const $ = id => document.getElementById(id);
 const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap'), mctx = mini.getContext('2d');
@@ -59,17 +59,18 @@ async function join(name, previousToken) {
 
 function updateUI() {
   const s = snapshot?.self, p = snapshot?.players.find(v => v.id === playerId); if (!s || !p) return;
-  $('playerName').textContent = p.name; $('levelBadge').textContent = 'NV. ' + s.level;
+  $('playerName').textContent = p.name; $('levelBadge').textContent = 'Lv. ' + s.level;
   $('hpBar').style.width = Math.max(0, 100 * s.hp / s.stats.hp) + '%';
   $('kiBar').style.width = Math.max(0, 100 * s.ki / s.stats.ki) + '%';
   $('hpText').textContent = integer(s.hp) + ' / ' + integer(s.stats.hp);
   $('kiText').textContent = integer(s.ki) + ' / ' + integer(s.stats.ki);
+  const xpPct = Math.min(100, s.xp / Math.max(1, s.xpNext) * 100);
   $('xpLabel').textContent = 'Nível ' + s.level; $('xpNumbers').textContent = integer(s.xp) + ' / ' + integer(s.xpNext) + ' XP';
-  $('xpBar').style.width = Math.min(100, s.xp / s.xpNext * 100) + '%';
+  $('xpBar').style.width = xpPct + '%';
+  $('hudXpBar').style.width = xpPct + '%'; $('hudXpText').textContent = 'EXP · ' + Math.round(xpPct) + '%';
   $('formLabel').textContent = s.transformed ? 'SUPER SAIYAJIN' : 'FORMA BASE';
-  $('nextUnlock').textContent = s.level < 2 ? 'Próximo: Rajada de Ki + Imagem Residual · NV. 2' : s.level < 3 ? 'Próximo: Kamehameha · NV. 3' : s.level < 5 ? 'Próximo: Super Saiyajin · NV. 5' : 'Atributos continuam evoluindo automaticamente.';
+  $('nextUnlock').textContent = s.level < 2 ? 'Próximo: Kaioken + Barreira de Ki · NV. 2' : s.level < 3 ? 'Próximo: Kamehameha · NV. 3' : s.level < 5 ? 'Próximo: Super Saiyajin · NV. 5' : s.level < 10 ? 'Próximo: Genki Dama · NV. 10' : 'Todas as técnicas principais desbloqueadas.';
   const stats = [['Vida', integer(s.stats.hp)], ['Ki', integer(s.stats.ki)], ['Ataque', s.stats.attack.toFixed(1)], ['Defesa', s.stats.defense.toFixed(1)], ['Cura / comida', s.stats.healing.toFixed(2) + '×'], ['Mochila', s.stats.capacity.toFixed(1) + ' kg'], ['Chance loot', Math.round(s.stats.lootChance * 100) + '%'], ['Movimento', Math.round(s.stats.mobility)]];
-  // Os conteúdos são fixos e os valores vêm do estado numérico do servidor.
   $('stats').replaceChildren(...stats.map(pair => { const div = document.createElement('div'); div.className = 'stat'; const label = document.createElement('span'), value = document.createElement('b'); label.textContent = pair[0]; value.textContent = pair[1]; div.append(label, value); return div; }));
   for (const key of ['autoAttack', 'autoSkills', 'autoFood', 'autoKi', 'autoSeed']) $(key).checked = s[key];
   $('huntZone').value = s.huntZone; $('huntButton').classList.toggle('running', s.autoHunt);
@@ -87,30 +88,42 @@ function updateUI() {
   $('foodBuff').textContent = s.foodRemaining > 0 ? '🍖 ' + (CONFIG.foodHealPerSecond * s.stats.healing).toFixed(1) + ' vida/s · ' + clock(s.foodRemaining) : 'Comida inativa · F para comer';
   $('foodBuff').classList.toggle('inactive', s.foodRemaining <= 0);
   $('huntStatus').textContent = s.autoHunt ? 'CAÇA AUTOMÁTICA ATIVA' : 'Exploração manual';
-  $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H';
-  $('quickHunt').classList.toggle('running', s.autoHunt);
+  $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H'; $('quickHunt').classList.toggle('running', s.autoHunt);
   const z = zoneAt(p.x, p.y);
   $('regionName').textContent = z?.name || 'Trilhas da Terra'; $('regionType').textContent = z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE';
   document.querySelector('.region').classList.toggle('pvp', Boolean(z?.pvp));
   $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');
+  $('missionKills').textContent = Math.min(10, s.kills || 0);
+  $('missionMaterials').textContent = (s.inventory.scrap || 0) + (s.inventory.crystal || 0);
+  $('missionLevel').textContent = s.level;
   const target = snapshot.mobs.find(m => m.id === s.targetId) || snapshot.players.find(v => v.id === s.targetId);
   $('targetHud').classList.toggle('hidden', !target || target.hp <= 0);
   if (target) { $('targetName').textContent = target.name + ' · ' + integer(target.hp) + ' PV'; $('targetBar').style.width = 100 * target.hp / target.maxHp + '%'; }
+  const skillState = {
+    kame: { required: CONFIG.skills.kame, remaining: s.kameRemaining || 0, text: s.level < CONFIG.skills.kame ? 'Libera NV. ' + CONFIG.skills.kame : s.kameRemaining > 0 ? s.kameRemaining.toFixed(1) + 's' : '23 Ki · 5s' },
+    kaioken: { required: CONFIG.skills.kaioken, remaining: s.kaiokenRemaining || 0, text: s.level < CONFIG.skills.kaioken ? 'Libera NV. ' + CONFIG.skills.kaioken : s.kaiokenActive ? 'ATIVO' : s.kaiokenRemaining > 0 ? s.kaiokenRemaining.toFixed(1) + 's' : '12 Ki · 12,5s' },
+    barrier: { required: CONFIG.skills.barrier, remaining: s.barrierRemaining || 0, text: s.level < CONFIG.skills.barrier ? 'Libera NV. ' + CONFIG.skills.barrier : s.barrierActive ? 'PROTEGIDO' : s.barrierRemaining > 0 ? s.barrierRemaining.toFixed(1) + 's' : '10 Ki · 8,1s' },
+    genki: { required: CONFIG.skills.genki, remaining: s.genkiRemaining || 0, text: s.level < CONFIG.skills.genki ? 'Libera NV. ' + CONFIG.skills.genki : s.genkiRemaining > 0 ? clock(s.genkiRemaining) : '60 Ki · 120s' }
+  };
   for (const button of document.querySelectorAll('[data-skill]')) {
-    const skill = button.dataset.skill, req = CONFIG.skills[skill] || 1;
-    button.classList.toggle('locked', s.level < req); button.disabled = s.level < req;
+    const skill = button.dataset.skill, state = skillState[skill]; if (!state) continue;
+    const locked = s.level < state.required;
+    button.classList.toggle('locked', locked); button.disabled = locked || state.remaining > 0 || (skill === 'kaioken' && s.kaiokenActive) || (skill === 'barrier' && s.barrierActive);
+    const label = button.querySelector('small'); if (label) label.textContent = state.text;
+    let cooldown = button.querySelector('.cooldown-overlay');
+    if (!cooldown) { cooldown = document.createElement('span'); cooldown.className = 'cooldown-overlay'; cooldown.setAttribute('aria-hidden', 'true'); button.append(cooldown); }
+    const remaining = state.remaining;
+    cooldown.textContent = remaining > 0 ? (remaining >= 10 ? Math.ceil(remaining) : remaining.toFixed(1)) + 's' : '';
+    button.classList.toggle('cooling', remaining > 0);
+    button.title = button.querySelector('strong').textContent + ' · ' + state.text + ' · tecla ' + button.querySelector('kbd').textContent;
   }
-  $('kiSkillText').textContent = s.level < 2 ? 'Libera NV. 2' : '7 Ki · 0,7s';
-  $('kameSkillText').textContent = s.level < 3 ? 'Libera NV. 3' : s.kameRemaining > 0 ? 'Recarga ' + s.kameRemaining.toFixed(1) + 's' : '23 Ki · direção do alvo';
-  $('dashSkillText').textContent = s.level < 2 ? 'Libera NV. 2' : s.dashRemaining > 0 ? 'Recarga ' + s.dashRemaining.toFixed(1) + 's' : 'Esquiva · 4s';
-  $('transformButton').disabled = s.level < 5; $('transformButton').classList.toggle('locked', s.level < 5); $('transformButton').classList.toggle('active', s.transformed);
-  $('transformText').textContent = s.level < 5 ? 'Libera NV. 5' : s.transformed ? 'ATIVO · 3,5 Ki/s' : 'Ativar · 3,5 Ki/s';
-  for (const button of document.querySelectorAll('.actionbar .skill')) {
-    const name = button.querySelector('strong').textContent;
-    const detail = button.querySelector('small').textContent;
-    const key = button.dataset.skill === 'dash' ? '4 ou espaço' : button.querySelector('kbd').textContent;
-    button.title = name + ' · ' + detail + ' · tecla ' + key;
-  }
+  const transformLocked = s.level < CONFIG.skills.transform;
+  $('transformButton').disabled = transformLocked || (!s.transformed && (s.transformRemaining || 0) > 0);
+  $('transformButton').classList.toggle('locked', transformLocked); $('transformButton').classList.toggle('active', s.transformed);
+  let transformCooldown = $('transformButton').querySelector('.cooldown-overlay');
+  if (!transformCooldown) { transformCooldown = document.createElement('span'); transformCooldown.className = 'cooldown-overlay'; transformCooldown.setAttribute('aria-hidden', 'true'); $('transformButton').append(transformCooldown); }
+  transformCooldown.textContent = !s.transformed && s.transformRemaining > 0 ? s.transformRemaining.toFixed(1) + 's' : '';
+  $('transformText').textContent = transformLocked ? 'Libera NV. 5' : s.transformed ? 'ATIVO · 3,5 Ki/s' : s.transformRemaining > 0 ? 'Recarga ' + Math.ceil(s.transformRemaining) + 's' : 'Buff · 45s';
   $('respawn').classList.toggle('hidden', s.hp > 0);
   $('respawnText').textContent = 'Retornando à vila em ' + Math.ceil(s.respawnRemaining) + 's';
 }
@@ -130,14 +143,14 @@ setInterval(sendInput, 70);
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || document.querySelector('dialog[open]')) return;
   const key = e.key.toLowerCase();
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) e.preventDefault();
   keys.add(key); sendInput(); if (e.repeat) return;
-  const skills = { '1': 'basic', '2': 'ki', '3': 'kame', '4': 'dash', ' ': 'dash' };
+  const skills = { '1': 'kame', '2': 'kaioken', '3': 'barrier', '5': 'genki', ' ': 'basic', 'shift': 'dash' };
   if (skills[key]) action({ type: 'skill', skill: skills[key] });
+  else if (key === '4' || key === 't') action({ type: 'transform' });
   else if (key === 'f') action({ type: 'food' });
   else if (key === 'q') action({ type: 'potion' });
   else if (key === 'r') action({ type: 'seed' });
-  else if (key === 't') action({ type: 'transform' });
   else if (key === 'h') $('huntButton').click();
 });
 document.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); sendInput(); });
@@ -227,12 +240,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(canvas);
 function screenPosition(entity, dt) {
-  let p = renderPositions.get(entity.id);
-  if (!p || Math.hypot(p.x - entity.x, p.y - entity.y) > 250) p = { x: entity.x, y: entity.y, facing: { x: 0, y: 1 } };
-  const dx = entity.x - p.x, dy = entity.y - p.y;
-  if (entity.moving && Math.hypot(dx, dy) > 0.05) p.facing = { x: dx, y: dy };
-  const factor = Math.min(1, dt * (entity.id === playerId ? 23 : 13));
-  p.x += (entity.x - p.x) * factor; p.y += (entity.y - p.y) * factor;
+  const p = advancePose(renderPositions.get(entity.id), entity, dt, entity.id === playerId);
   renderPositions.set(entity.id, p); return p;
 }
 function shadow(x, y, size = 16) { ctx.fillStyle = '#15291e66'; ctx.beginPath(); ctx.ellipse(x, y + 4, size, size * 0.35, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -243,10 +251,12 @@ function drawPlayer(p, pos, time) {
   const image = p.transformed ? (back ? sprites.ssjBack : sprites.ssj) : back ? sprites.gokuBack : sprites.goku;
   const bob = p.moving ? Math.sin(time * 15) * 1.4 : 0;
   if (p.transformed) { ctx.strokeStyle = '#f1d75a88'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(pos.x, pos.y - 20, 28 + Math.sin(time * 10) * 3, 42, 0, 0, Math.PI * 2); ctx.stroke(); }
-  const strike = floating.find(e => e.playerId === p.id && e.type === 'punch' && time - e.at >= 0 && time - e.at < 0.18);
-  const strikeProgress = strike ? Math.min(1, (time - strike.at) / 0.18) : null;
+  if (p.id === playerId && snapshot.self?.kaiokenActive) { ctx.strokeStyle = '#ff4c43aa'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(pos.x, pos.y - 20, 31 + Math.sin(time * 18) * 3, 44, 0, 0, Math.PI * 2); ctx.stroke(); }
+  if (p.id === playerId && snapshot.self?.barrierActive) { const r = 33 + Math.sin(time * 12) * 2; ctx.strokeStyle = '#66dfffcc'; ctx.lineWidth = 2.5; ctx.fillStyle = '#4bc5ff18'; ctx.beginPath(); ctx.arc(pos.x, pos.y - 22, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  const strike = floating.find(e => e.playerId === p.id && e.type === 'punch' && time - e.at >= 0 && time - e.at < 0.36);
+  const strikeProgress = strike ? Math.min(1, (time - strike.at) / 0.36) : null;
   const hit = floating.some(e => e.targetId === p.id && e.type === 'damage' && time - e.at >= 0 && time - e.at < 0.12);
-  if (p.dashing) { ctx.globalAlpha = 0.3; drawGoku(ctx, p, { x: pos.x - p.facing.x * 23, y: pos.y - p.facing.y * 23 }, time, strikeProgress); ctx.globalAlpha = 1; }
+  if (p.dashing) { ctx.globalAlpha = 0.3; drawGoku(ctx, p, { ...pos, x: pos.x - p.facing.x * 23, y: pos.y - p.facing.y * 23 }, time, strikeProgress); ctx.globalAlpha = 1; }
   ctx.save(); if (hit) ctx.filter = 'brightness(1.7) saturate(.6)';
   if (!drawGoku(ctx, p, pos, time, strikeProgress)) ctx.drawImage(image, Math.round(pos.x - 21), Math.round(pos.y - 49 + bob), 42, 56);
   ctx.restore();
@@ -259,13 +269,16 @@ function drawMob(m, pos, time) {
   shadow(pos.x, pos.y, boss ? 35 : 17);
   if (snapshot.self?.targetId === m.id) { ctx.strokeStyle = '#f3c47b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(pos.x, pos.y + 3, boss ? 39 : 24, boss ? 17 : 11, 0, 0, Math.PI * 2); ctx.stroke(); }
   const hit = floating.some(e => e.targetId === m.id && e.type === 'damage' && time - e.at >= 0 && time - e.at < 0.12);
-  const phase = (Number(m.id.replace(/\D/g, '')) || 0) % 2;
-  const warning = m.telegraph;
-  const attackProgress = warning ? Math.max(0, Math.min(1, (time - warning.started) / (warning.until - warning.started))) : null;
-  const facing = warning ? (warning.kind === 'shot' ? { x: warning.dx, y: warning.dy } : { x: warning.x - pos.x, y: warning.y - pos.y }) : pos.facing;
+  const phase = ((Number(m.id.replace(/\D/g, '')) || 0) % 16) / 16;
+  const attackProgress = mobStrikeProgress(m.strike, time);
+  const facing = attackProgress !== null ? m.strike.direction : pos.facing;
   ctx.save(); if (hit) ctx.filter = 'brightness(1.7) saturate(.6)';
-  const drawn = m.type === 'melee' ? drawSaibaman(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress) : drawAlien(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress);
-  if (!drawn) ctx.drawImage(m.type === 'melee' ? sprites.melee : sprites.ranged, Math.round(pos.x - size / 2), Math.round(pos.y - h + 8 + (m.moving ? Math.sin(time * 14) : 0)), size, h);
+  const drawn = boss
+    ? drawFreeza(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress, pos.travelled)
+    : m.type === 'melee'
+      ? drawSaibaman(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress, pos.travelled)
+      : drawAlien(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress, pos.travelled);
+  if (!drawn) ctx.drawImage(boss ? art.freezaBoss : m.type === 'melee' ? sprites.melee : sprites.ranged, Math.round(pos.x - size / 2), Math.round(pos.y - h + 8 + (m.moving ? Math.sin(time * 14) : 0)), size, h);
   ctx.restore();
   if (m.hp < m.maxHp || snapshot.self?.targetId === m.id || boss) healthBar(pos.x, pos.y - h - 2, m.hp, m.maxHp, boss ? '#d38c62' : '#c29d6d', boss ? 72 : 40);
   if (boss || snapshot.self?.targetId === m.id) { ctx.font = boss ? 'bold 12px monospace' : '9px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f0d5b2'; ctx.fillText(m.name, pos.x, pos.y - h - 9); }
@@ -295,8 +308,9 @@ function effects(time) {
   }
 }
 function drawMinimap() {
-  mctx.fillStyle = '#385a2d'; mctx.fillRect(0, 0, 156, 104);
-  const sx = 156 / CONFIG.width, sy = 104 / CONFIG.height;
+  const mapW = mini.width, mapH = mini.height;
+  mctx.fillStyle = '#385a2d'; mctx.fillRect(0, 0, mapW, mapH);
+  const sx = mapW / CONFIG.width, sy = mapH / CONFIG.height;
   mctx.fillStyle = '#c09b6e';
   mctx.beginPath();
   for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
@@ -328,7 +342,11 @@ function frame(now) {
     ...snapshot.mobs.map(m => ({ y: renderPositions.get(m.id).y, draw: () => drawMob(m, renderPositions.get(m.id), time) }))
   ].sort((a, b) => a.y - b.y);
   for (const d of drawables) if (d.y > camera.y - 150 && d.y < camera.y + height / camera.scale + 150) d.draw();
-  for (const s of snapshot.projectiles) { const px = s.x + s.dx * s.speed * Math.min(0.07, (now - receivedAt) / 1000), py = s.y + s.dy * s.speed * Math.min(0.07, (now - receivedAt) / 1000); ctx.strokeStyle = s.ownerType === 'player' ? '#b7edff' : '#f3ba8d'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px - s.dx * 12, py - s.dy * 12); ctx.lineTo(px, py); ctx.stroke(); ctx.lineCap = 'butt'; }
+  for (const s of snapshot.projectiles) {
+    const px = s.x + s.dx * s.speed * Math.min(0.07, (now - receivedAt) / 1000), py = s.y + s.dy * s.speed * Math.min(0.07, (now - receivedAt) / 1000);
+    if (s.kind === 'genki') { ctx.save(); const glow = ctx.createRadialGradient(px, py, 3, px, py, 29); glow.addColorStop(0, '#ffffff'); glow.addColorStop(.28, '#c4f7ff'); glow.addColorStop(.7, '#5cbbff'); glow.addColorStop(1, '#a152ff00'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px, py, 29, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    else { ctx.strokeStyle = s.ownerType === 'player' ? '#b7edff' : '#f3ba8d'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px - s.dx * 12, py - s.dy * 12); ctx.lineTo(px, py); ctx.stroke(); ctx.lineCap = 'butt'; }
+  }
   effects(time); ctx.restore(); drawMinimap(); requestAnimationFrame(frame);
 }
 resize(); requestAnimationFrame(frame);

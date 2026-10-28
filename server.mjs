@@ -39,7 +39,7 @@ export async function createGameServer({ port = 3000, host = '127.0.0.1', dataDi
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://localhost');
-      if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, version: '0.3.0', players: [...game.players.values()].filter(p => p.connected).length });
+      if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, version: '0.6.0', players: [...game.players.values()].filter(p => p.connected).length });
       if (req.method === 'POST' && url.pathname === '/api/join') {
         const input = await body(req);
         let token = typeof input.token === 'string' && /^[a-f0-9]{40}$/.test(input.token) ? input.token : null;
@@ -116,7 +116,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const port = Number(option('--port', process.env.PORT || 3000));
   const host = option('--host', '127.0.0.1');
   createGameServer({ port, host }).then(app => {
-    console.log('\nDragon Ball Idle — protótipo 0.3');
+    console.log('\nDragon Ball Idle — protótipo 0.6');
     console.log('Abra no navegador: http://localhost:' + app.port);
     console.log('Uma segunda aba cria outro jogador real no mesmo mapa.');
     console.log('Para encerrar: Ctrl+C. Progresso salvo em data/save.json.\n');

@@ -1,6 +1,6 @@
-# Dragon Ball Idle — protótipo visual 0.3
+# Dragon Ball Idle — protótipo jogável 0.6
 
-Esta versão acrescenta passos animados e poses de ataque ao Goku e aos inimigos, caminhos com curvas, pedras ajustadas, barra de habilidades menor e zoom. O projeto continua com um mapa de teste, Goku, combate, caça automática e um servidor multiplayer local.
+Esta versão amplia a caminhada e o ataque para 16 quadros por ciclo e acrescenta vistas diagonais ao Goku, Super Saiyajin e a todos os mobs atuais. Mantém caminhos com curvas, pedras ajustadas, barra de habilidades compacta, zoom, caça automática e servidor multiplayer local.
 
 ## Como atualizar a versão anterior sem perder o progresso
 
@@ -19,7 +19,7 @@ O ZIP não contém o progresso do seu computador. O arquivo save.json e a sessã
 4. Execute npm start.
 5. Abra http://localhost:3000 no navegador.
 
-Não é necessário executar npm install. Este protótipo usa somente recursos nativos do Node.js e do navegador, sem pacotes externos.
+Não é necessário executar npm install. Este protótipo usa somente recursos nativos do Node.js e do navegador, sem pacotes externos. A HUD v0.6 foi integrada sobre a tela de jogo existente; ela não substitui o mapa por uma imagem estática.
 
 Você também pode iniciar pelo INICIAR_WINDOWS.bat. No Mac, rode npm start pelo Terminal; INICIAR_MAC.command é uma alternativa se o sistema permitir sua execução.
 
@@ -32,19 +32,23 @@ Para encerrar, pressione Ctrl+C no Terminal. O progresso fica no arquivo data/sa
 | Mover | WASD, setas, clique no chão ou direcional de toque |
 | Aproximar / afastar | Roda do mouse sobre o mapa ou botões + / − junto ao minimapa |
 | Selecionar alvo | Clique no mob ou em outro jogador |
-| Ataque básico | 1 ou botão Combo |
-| Rajada de Ki | 2, disponível no nível 2 |
-| Kamehameha | 3, disponível no nível 3 |
-| Imagem Residual | 4 ou Espaço, disponível no nível 2 |
-| Transformar | T, disponível no nível 5 |
+| Kamehameha | 1, disponível no nível 3 |
+| Kaioken | 2, disponível no nível 2; aumenta o dano por 6 s |
+| Barreira de Ki | 3, disponível no nível 2; reduz o dano recebido por 2,5 s |
+| Super Saiyajin | 4 ou T, disponível no nível 5 |
+| Genki Dama | 5, disponível no nível 10; recarga de 120 s |
+| Ataque básico | Espaço |
+| Esquiva rápida | Shift |
 | Comer | F |
 | Poção de Ki | Q |
 | Semente selecionada | R |
 | Iniciar/pausar caça | H ou botão no painel |
 
-O botão **Personagem e caça** no cabeçalho abre o painel de status, inventário e configurações. O botão **Caça · H** no mapa inicia ou pausa a caça. No celular, use os botões e o direcional.
+A HUD nova fica sobre o mapa que continua ativo. O retrato, HP, Ki, experiência, recursos, minimapa, bússola, missões, menu lateral, chat e cinco slots de habilidade são elementos HTML/CSS; os personagens e o mundo continuam renderizados no Canvas. O botão **Mais** abre o painel de status, inventário e caça. A HUD de missões/chat é uma interface de protótipo; o chat mostrado é demonstrativo, não um chat multiplayer persistente.
 
-O Goku, o Saibaman e a sentinela alienígena usam dois quadros alternados de caminhada com orientação de frente, costas e laterais; o Super Saiyajin também. O ataque básico tem duas poses de golpe, e os inimigos apresentam preparação e ataque durante seus avisos de combate. Ações mais complexas e animações com mais quadros ainda podem ser desenvolvidas.
+Goku, Super Saiyajin, Saibaman, Sentinela e Guardião da Cratera usam 16 quadros por ciclo de caminhada e ataque básico. As oito direções incluem nordeste, noroeste, sudeste e sudoeste com vistas em três quartos. A velocidade nas diagonais permanece igual à das direções retas. As pernas acompanham a distância realmente percorrida; quando não há deslocamento, o ciclo não avança. Os mobs mantêm a orientação ao parar, e a recuperação da animação continua após o impacto.
+
+Para conferir as sprites sem mexer no progresso, com o servidor ligado abra **http://localhost:3000/animacoes.html**. Escolha caminhar, atacar ou parado; use **Anterior**, **Próximo** ou **Reproduzir** para comparar os 16 quadros nas oito direções. Ações como morte, uso de itens e esquiva ainda não possuem sequências próprias de 16 quadros.
 
 ## Roteiro para o primeiro teste
 
@@ -104,29 +108,27 @@ O protótipo tem apenas Goku e um mapa pequeno. Ainda não há contas de produç
 ## Estrutura do código
 
 - server.mjs: servidor HTTP, conexão de jogadores, transmissão de estado e salvamento.
-- public/shared/: regras autoritativas, compartilhadas pelo servidor e pelo navegador.
-  - config.mjs: mundo, zonas, obstáculos e números de balanceamento (ajustáveis).
-  - math.mjs: funções matemáticas puras (distância, normalização, etc.).
-  - characters.mjs: personagem jogável (Goku), progressão e inventário inicial.
-  - enemies.mjs: atributos dos inimigos e onde eles nascem no mapa.
-  - game.mjs: a classe Game — combate, movimento, inventário e tick do mundo.
-  - index.mjs: ponto de entrada que reúne o que o servidor e o cliente importam.
+- public/shared/: regras autoritativas compartilhadas pelo servidor e pelo navegador.
+  - config.mjs (mundo, zonas, obstáculos e números), math.mjs (helpers puros),
+    characters.mjs (Goku, progressão e inventário inicial), enemies.mjs (inimigos, incl. Freeza),
+    game.mjs (classe Game: combate, movimento, tick) e index.mjs (ponto de entrada).
 - public/client/game.mjs: interface, controles, desenho do mapa e sprites de reserva.
-- public/art/: desenho separado por assunto (terrain, goku, saibaman, alien, atlas, assets) + index.mjs.
+- public/art/: desenho separado por assunto (terrain, goku, saibaman, alien, freeza, atlas, assets) + index.mjs.
+- public/art/sprite-data.mjs: recortes e âncoras de chão das folhas de animação.
 - public/render/camera.mjs: zoom, câmera, mira no mapa e seleção de quadros de movimento.
+- public/animacoes.html: prévia das oito direções e dos 16 quadros de cada ciclo.
 - public/assets/: sprites e texturas em PNG.
 - public/style.css: apresentação e adaptação para telas pequenas.
-- tests/game.test.mjs: testes das regras e de duas conexões reais.
-- tests/view.test.mjs: testes da câmera e dos quadros de animação.
+- tests/game.test.mjs, tests/view.test.mjs, tests/sprites.test.mjs: testes de regras, câmera e sprites.
 - docs/CONCEITO.md: cópia das decisões do projeto no momento desta entrega.
 
-Regra importante: como o projeto não usa empacotador, o navegador carrega os módulos
-direto pela URL. Por isso todo código compartilhado fica dentro de public/.
+Como o projeto não usa empacotador, o navegador carrega os módulos direto pela URL;
+por isso todo código compartilhado fica dentro de public/.
 
 As tecnologias Phaser + TypeScript e Colyseus foram recomendações iniciais. Para entregar um teste local sem instalação de bibliotecas, esta versão usa Canvas 2D e Node.js com módulos JavaScript. O código de regras está separado da apresentação para permitir uma migração futura se ela se mostrar útil.
 
 ## Verificação
 
-Execute npm test para verificar as regras e a conexão de dois jogadores. Execute npm run check para verificar a sintaxe dos módulos.
+Execute npm test para verificar as regras, a conexão de dois jogadores, diagonais, quadros e sincronização dos golpes. Os 21 testes passaram nesta entrega, incluindo desbloqueios e cooldowns de Kaioken/Barreira de Ki e desbloqueio/impacto de área da Genki Dama. Execute npm run check para verificar a sintaxe dos módulos.
 
 O servidor transmite o estado para o navegador e calcula as regras. A primeira validação envolve duas sessões; capacidade de jogadores em produção ainda precisa de testes próprios.
