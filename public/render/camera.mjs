@@ -44,6 +44,16 @@ export function strikeFrame(progress) {
   return Math.min(ANIMATION_FRAMES - 1, Math.max(0, Math.floor(progress * ANIMATION_FRAMES)));
 }
 // Half the frames anticipate the existing impact; the other half finish and recover.
+// Folhas de golpe com 4 quadros (preparacao, soco, impacto, recuperacao).
+export function strikeColumn(progress) {
+  return progress < 0.25 ? 0 : progress < 0.5 ? 1 : progress < 0.8 ? 2 : 3;
+}
+export const PLAYER_STRIKE_DURATION = 0.36;
+export const PLAYER_STRIKE_START = 0.375;
+export function playerStrikeProgress(age) {
+  if (age < 0 || age >= PLAYER_STRIKE_DURATION) return null;
+  return PLAYER_STRIKE_START + (1 - PLAYER_STRIKE_START) * age / PLAYER_STRIKE_DURATION;
+}
 export function mobStrikeProgress(strike, time) {
   if (!strike || time < strike.started || time >= strike.until) return null;
   if (time < strike.release) return 0.5 * (time - strike.started) / (strike.release - strike.started);

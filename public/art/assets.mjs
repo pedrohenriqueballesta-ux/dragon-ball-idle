@@ -1,6 +1,10 @@
 // Registro de imagens (sprites e texturas). A arte é separada da simulação
 // autoritativa, que vive em shared/.
 import { SPRITE_DATA } from './sprite-data.mjs';
+import { GOKU_PASSO } from './goku-passo.mjs';
+import { SSJ_PASSO } from './ssj-passo.mjs';
+import { GOKU_GOLPE } from './goku-golpe.mjs';
+import { SSJ_GOLPE } from './ssj-golpe.mjs';
 
 const imageCache = new Map();
 const loadImage = url => {
@@ -17,6 +21,10 @@ export const art = {
   freezaBoss: loadImage('/assets/freeza-boss.png'),
   freezaFrames: Array.from({ length: 16 }, (_, i) => loadImage('/assets/freeza/freeza_idle_view' + (Math.floor(i / 4) + 1) + '_frame' + ((i % 4) + 1) + '.png')),
   ...Object.fromEntries(Object.entries(SPRITE_DATA).map(([key, data]) => [key, loadImage(data.file)])),
+  gokuPasso: loadImage(GOKU_PASSO.file),
+  ssjPasso: loadImage(SSJ_PASSO.file),
+  gokuGolpe: loadImage(GOKU_GOLPE.file),
+  ssjGolpe: loadImage(SSJ_GOLPE.file),
   grass: loadImage('/assets/grass.png'),
   earth: loadImage('/assets/earth.png')
 };

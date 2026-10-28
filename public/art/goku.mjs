@@ -1,8 +1,17 @@
-// Desenho do Goku (forma base e Super Saiyajin), com caminhada e golpe de 16 quadros.
+// Desenho do Goku (forma base e Super Saiyajin): caminhada e soco desenhados
+// quadro a quadro (folhas passo/golpe), com recortes de 16 quadros como reserva.
 import { art, loaded } from './assets.mjs';
-import { drawWalk, drawAttack } from './atlas.mjs';
+import { drawWalk, drawAttack, drawSheet, GOLPE } from './atlas.mjs';
+import { strikeColumn } from '../render/camera.mjs';
 
 export function drawGoku(ctx, player, pos, time, strikeProgress = null) {
+  // Soco e carga do Kamehameha vêm da folha de golpe desenhada da forma atual (carga = pose de preparação).
+  if (!player.dead) {
+    const [sheet, key] = GOLPE[player.transformed ? 'ssj' : 'goku'];
+    if (strikeProgress !== null && !player.charge &&
+        drawSheet(ctx, sheet, art[key], pos, 70, player.facing, strikeColumn(strikeProgress))) return true;
+    if (player.charge && drawSheet(ctx, sheet, art[key], pos, 70, player.facing, 0)) return true;
+  }
   if (strikeProgress !== null && !player.dead && !player.charge &&
       drawAttack(ctx, player.transformed ? 'ssj' : 'goku', pos, 70, player.facing, strikeProgress)) return true;
   if (player.charge && !player.dead &&
