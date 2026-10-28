@@ -213,7 +213,8 @@
       const crystalTarget = document.getElementById('hudCrystals');
       if (crystalTarget && crystal && crystalTarget.textContent !== crystal[1]) crystalTarget.textContent = crystal[1];
     };
-    new MutationObserver(syncHudCurrency).observe(document.body, { subtree: true, childList: true, characterData: true });
+    const currencyObserver = new MutationObserver(syncHudCurrency);
+    for (const el of ['zeni', 'materials'].map((id) => document.getElementById(id))) { if (el) currencyObserver.observe(el, { childList: true, characterData: true, subtree: true }); }
     syncHudCurrency();
   </script>
   <script type="module" src="/client/game.mjs"></script>
