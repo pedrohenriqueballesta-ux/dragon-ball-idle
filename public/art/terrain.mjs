@@ -132,13 +132,13 @@ export function drawVendor(ctx, merchant) {
 export function drawHouseGround() {}
 
 // Casa namekiana com a base no ponto (x, y), enterrada alguns pixels no chão para não parecer
-// solta. Os sprites são reduzidos: suavizar evita serrilhado.
+// solta. Reduzida na tela, suavizar evita serrilhado; ampliada, fica sem suavização (pixel art nítida).
 export function drawHouse(ctx, house) {
   const image = (house.ruina ? art.namekRuinas : art.namekCasas)[house.sprite - 1];
   if (!loaded(image)) return false;
   const h = house.w * image.naturalHeight / image.naturalWidth, enterra = Math.round(house.w * 0.035);
   ctx.save();
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingEnabled = house.w * ctx.getTransform().a < image.naturalWidth; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, Math.round(house.x - house.w / 2), Math.round(house.y - h + enterra), house.w, h);
   ctx.restore(); return true;
 }
