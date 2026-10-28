@@ -40,7 +40,10 @@ test('subir de nível aumenta todos os atributos automaticamente e libera técni
   assert.equal(game.cast(p, 'ki').ok, true);
   assert.equal(game.cast(p, 'kame').ok, false);
   game.awardXp(p, xpForLevel(2));
+  const kiBeforeKame = p.ki;
   assert.equal(game.cast(p, 'kame').ok, true);
+  assert.equal(p.ki, kiBeforeKame - CONFIG.skillCosts.kame);
+  assert.equal(game.snapshot(p.id).self.kameRemaining, CONFIG.skillCooldowns.kame);
 });
 
 test('PvP é recusado fora da região e permitido com os dois jogadores na área PvP', () => {
@@ -115,7 +118,10 @@ test('Saibaman, sentinela e chefe transmitem direção e recuperação sem antec
 test('transformação exige nível e termina quando o Ki acaba', () => {
   const game = world(), low = game.addPlayer('a'), high = game.addPlayer('b', 'Goku', { level: 5 });
   assert.equal(game.action(low.id, { type: 'transform' }).ok, false);
+  const kiBeforeTransform = high.ki;
   assert.equal(game.action(high.id, { type: 'transform' }).ok, true);
+  assert.equal(high.ki, kiBeforeTransform - CONFIG.skillCosts.transform);
+  assert.equal(game.snapshot(high.id).self.transformRemaining, CONFIG.skillCooldowns.transform);
   high.ki = 0.1; advance(game, 0.1); assert.equal(high.transformed, false);
 });
 
@@ -184,19 +190,23 @@ test('Kaioken e Barreira de Ki têm níveis de desbloqueio, duração e recarga'
   assert.equal(game.cast(p, 'kaioken').ok, true);
   assert.equal(p.ki, kiBefore - 12);
   assert.equal(game.snapshot(p.id).self.kaiokenActive, true);
+  assert.equal(game.snapshot(p.id).self.kaiokenRemaining, CONFIG.skillCooldowns.kaioken);
   assert.equal(game.cast(p, 'kaioken').ok, false, 'Kaioken não pode ser empilhado durante a duração');
   advance(game, 6.1);
   assert.equal(game.snapshot(p.id).self.kaiokenActive, false);
-  assert.ok(game.snapshot(p.id).self.kaiokenRemaining > 0, 'a recarga continua após o efeito terminar');
+  assert.ok(game.snapshot(p.id).self.kaiokenRemaining > 5, 'a recarga de 12s continua após os 6s de efeito');
 
   const defended = world(), dp = defended.addPlayer('defended', 'Goku', { level: 2 });
   const attacker = defended.addMob('melee', dp.x + 20, dp.y);
   const hpBefore = dp.hp;
+  const kiBeforeBarrier = dp.ki;
   assert.equal(defended.cast(dp, 'barrier').ok, true);
+  assert.equal(dp.ki, kiBeforeBarrier - CONFIG.skillCosts.barrier);
   assert.equal(defended.hit(attacker, dp, 30), true);
   const mitigated = hpBefore - dp.hp;
   assert.ok(mitigated > 0 && mitigated < 30, 'a barreira reduz o dano recebido');
   assert.equal(defended.snapshot(dp.id).self.barrierActive, true);
+  assert.equal(defended.snapshot(dp.id).self.barrierRemaining, CONFIG.skillCooldowns.barrier);
 });
 
 test('Genki Dama só libera no nível 10 e atinge o alvo com projétil de área', () => {
@@ -208,8 +218,10 @@ test('Genki Dama só libera no nível 10 e atinge o alvo com projétil de área'
   const kiBefore = p.ki;
   assert.equal(game.cast(p, 'genki').ok, true);
   assert.equal(p.ki, kiBefore - 60);
-  assert.ok(game.snapshot(p.id).self.genkiRemaining > 119);
+  assert.equal(game.snapshot(p.id).self.genkiRemaining, CONFIG.skillCooldowns.genki);
   advance(game, 0.45);
   assert.equal(target.hp, 0, 'o projétil da Genki Dama deve acertar o alvo próximo');
-  assert.equal(game.cast(p, 'genki').ok, false, 'a técnica deve respeitar a recarga de 120 segundos');
+  assert.equal(game.cast(p, 'genki').ok, false, 'a técnica ainda está na recarga de 45 segundos');
+  advance(game, 0.6);
+  assert.equal(game.cast(p, 'genki').ok, false, 'a técnica continua em recarga após 1 segundo');
 });

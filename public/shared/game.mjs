@@ -97,8 +97,8 @@ export class Game {
       if (p.level < CONFIG.skills.transform) return this.reject(p, 'Super Saiyajin libera no nível ' + CONFIG.skills.transform + '.');
       if (p.transformed) { p.transformed = false; this.notify(p, 'Forma base.'); return { ok: true }; }
       if (this.time < p.transformReady) return this.reject(p, 'Super Saiyajin em recarga: ' + Math.ceil(p.transformReady - this.time) + 's.');
-      if (p.ki < 10) return this.reject(p, 'Ki insuficiente para transformar.');
-      p.transformed = true; p.ki -= 10; p.transformReady = this.time + 45;
+      if (p.ki < CONFIG.skillCosts.transform) return this.reject(p, 'Ki insuficiente para transformar.');
+      p.transformed = true; p.ki -= CONFIG.skillCosts.transform; p.transformReady = this.time + CONFIG.skillCooldowns.transform;
       this.notify(p, 'Super Saiyajin ativado!'); return { ok: true };
     }
     if (kind === 'travelPlanet') {
@@ -182,26 +182,26 @@ export class Game {
     }
     if (skill === 'kame') {
       if (p.level < CONFIG.skills.kame) return automated ? { ok: false } : this.reject(p, 'Kamehameha libera no nível 3.');
-      if (p.charge || this.time < p.kameReady || p.ki < 23) return automated ? { ok: false } : this.reject(p, 'Kamehameha em recarga ou Ki insuficiente.');
-      const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= 23; p.kameReady = this.time + 5;
+      if (p.charge || this.time < p.kameReady || p.ki < CONFIG.skillCosts.kame) return automated ? { ok: false } : this.reject(p, 'Kamehameha em recarga ou Ki insuficiente.');
+      const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= CONFIG.skillCosts.kame; p.kameReady = this.time + CONFIG.skillCooldowns.kame;
       p.charge = { until: this.time + 0.65, direction: dir }; return { ok: true };
     }
     if (skill === 'kaioken') {
       if (p.level < CONFIG.skills.kaioken) return automated ? { ok: false } : this.reject(p, 'Kaioken libera no nível 2.');
-      if (this.time < p.kaiokenReady || this.time < p.kaiokenUntil || p.ki < 12) return automated ? { ok: false } : this.reject(p, 'Kaioken em recarga ou Ki insuficiente.');
-      p.ki -= 12; p.kaiokenUntil = this.time + 6; p.kaiokenReady = this.time + 12.5;
+      if (this.time < p.kaiokenReady || this.time < p.kaiokenUntil || p.ki < CONFIG.skillCosts.kaioken) return automated ? { ok: false } : this.reject(p, 'Kaioken em recarga ou Ki insuficiente.');
+      p.ki -= CONFIG.skillCosts.kaioken; p.kaiokenUntil = this.time + 6; p.kaiokenReady = this.time + CONFIG.skillCooldowns.kaioken;
       this.emit('kaioken', { x: p.x, y: p.y, playerId: p.id }); this.notify(p, 'Kaioken ativado por 6 segundos!'); return { ok: true };
     }
     if (skill === 'barrier') {
       if (p.level < CONFIG.skills.barrier) return automated ? { ok: false } : this.reject(p, 'Barreira de Ki libera no nível 2.');
-      if (this.time < p.barrierReady || p.ki < 10) return automated ? { ok: false } : this.reject(p, 'Barreira em recarga ou Ki insuficiente.');
-      p.ki -= 10; p.barrierUntil = this.time + 2.5; p.barrierReady = this.time + 8.1;
+      if (this.time < p.barrierReady || p.ki < CONFIG.skillCosts.barrier) return automated ? { ok: false } : this.reject(p, 'Barreira em recarga ou Ki insuficiente.');
+      p.ki -= CONFIG.skillCosts.barrier; p.barrierUntil = this.time + 2.5; p.barrierReady = this.time + CONFIG.skillCooldowns.barrier;
       this.emit('barrier', { x: p.x, y: p.y, playerId: p.id }); this.notify(p, 'Barreira de Ki ativada!'); return { ok: true };
     }
     if (skill === 'genki') {
       if (p.level < CONFIG.skills.genki) return automated ? { ok: false } : this.reject(p, 'Genki Dama libera no nível 10.');
-      if (this.time < p.genkiReady || p.ki < 60 || p.charge) return automated ? { ok: false } : this.reject(p, 'Genki Dama em recarga ou Ki insuficiente.');
-      const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= 60; p.genkiReady = this.time + 120;
+      if (this.time < p.genkiReady || p.ki < CONFIG.skillCosts.genki || p.charge) return automated ? { ok: false } : this.reject(p, 'Genki Dama em recarga ou Ki insuficiente.');
+      const dir = this.aimDirection(p, target); p.facing = dir; p.ki -= CONFIG.skillCosts.genki; p.genkiReady = this.time + CONFIG.skillCooldowns.genki;
       this.projectiles.push({ id: this.uid('s'), x: p.x, y: p.y - 22, dx: dir.x, dy: dir.y, speed: 265,
         owner: p.id, ownerType: 'player', damage: p.stats.attack * (p.transformed ? 14 : 10), ttl: 2.35, kind: 'genki', radius: 72 });
       this.emit('genki', { x: p.x, y: p.y, dx: dir.x, dy: dir.y, playerId: p.id }); return { ok: true };

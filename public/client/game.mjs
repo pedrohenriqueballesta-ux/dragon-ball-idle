@@ -12,6 +12,20 @@ const integer = v => Math.round(v).toLocaleString('pt-BR');
 const clock = seconds => { const n = Math.max(0, Math.ceil(seconds)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const itemNames = { food: 'Presunto', ki: 'Poção de Ki', seed15: 'Semente 15%', seed30: 'Semente 30%', seed50: 'Semente 50%', seed100: 'Semente 100%' };
 
+function renderSkillMeta(element, cost, detail) {
+  if (!element) return;
+  if (cost == null) { element.textContent = detail; return; }
+  const costBadge = document.createElement('span'); costBadge.className = 'skill-cost'; costBadge.setAttribute('aria-label', cost + ' Ki');
+  const costValue = document.createElement('b'); costValue.className = 'skill-cost-value'; costValue.textContent = cost;
+  const costUnit = document.createElement('span'); costUnit.className = 'skill-cost-unit'; costUnit.textContent = 'KI';
+  costBadge.replaceChildren(costValue, costUnit);
+  const detailLabel = document.createElement('span');
+  const isCooldown = /^(?:\d+(?:[.,]\d+)?s|\d+:\d{2})$/.test(detail);
+  detailLabel.className = isCooldown ? 'skill-cost-detail skill-cooldown' : 'skill-cost-detail';
+  detailLabel.textContent = detail;
+  element.replaceChildren(costBadge, detailLabel);
+}
+
 function notify(text) {
   if ($('shopDialog').open) $('shopNotice').textContent = text;
   const element = document.createElement('div'); element.className = 'toast'; element.textContent = text;
@@ -102,16 +116,18 @@ function updateUI() {
   $('targetHud').classList.toggle('hidden', !target || target.hp <= 0);
   if (target) { $('targetName').textContent = target.name + ' · ' + integer(target.hp) + ' PV'; $('targetBar').style.width = 100 * target.hp / target.maxHp + '%'; }
   const skillState = {
-    kame: { required: CONFIG.skills.kame, remaining: s.kameRemaining || 0, text: s.level < CONFIG.skills.kame ? 'Libera NV. ' + CONFIG.skills.kame : s.kameRemaining > 0 ? s.kameRemaining.toFixed(1) + 's' : '23 Ki · 5s' },
-    kaioken: { required: CONFIG.skills.kaioken, remaining: s.kaiokenRemaining || 0, text: s.level < CONFIG.skills.kaioken ? 'Libera NV. ' + CONFIG.skills.kaioken : s.kaiokenActive ? 'ATIVO' : s.kaiokenRemaining > 0 ? s.kaiokenRemaining.toFixed(1) + 's' : '12 Ki · 12,5s' },
-    barrier: { required: CONFIG.skills.barrier, remaining: s.barrierRemaining || 0, text: s.level < CONFIG.skills.barrier ? 'Libera NV. ' + CONFIG.skills.barrier : s.barrierActive ? 'PROTEGIDO' : s.barrierRemaining > 0 ? s.barrierRemaining.toFixed(1) + 's' : '10 Ki · 8,1s' },
-    genki: { required: CONFIG.skills.genki, remaining: s.genkiRemaining || 0, text: s.level < CONFIG.skills.genki ? 'Libera NV. ' + CONFIG.skills.genki : s.genkiRemaining > 0 ? clock(s.genkiRemaining) : '60 Ki · 120s' }
+    kame: { required: CONFIG.skills.kame, cost: CONFIG.skillCosts.kame, cooldown: CONFIG.skillCooldowns.kame, remaining: s.kameRemaining || 0, text: s.level < CONFIG.skills.kame ? CONFIG.skillCooldowns.kame + 's' : s.kameRemaining > 0 ? s.kameRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kame + 's' },
+    kaioken: { required: CONFIG.skills.kaioken, cost: CONFIG.skillCosts.kaioken, cooldown: CONFIG.skillCooldowns.kaioken, remaining: s.kaiokenRemaining || 0, text: s.level < CONFIG.skills.kaioken ? CONFIG.skillCooldowns.kaioken + 's' : s.kaiokenActive ? 'ATIVO' : s.kaiokenRemaining > 0 ? s.kaiokenRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kaioken + 's', active: s.kaiokenActive },
+    barrier: { required: CONFIG.skills.barrier, cost: CONFIG.skillCosts.barrier, cooldown: CONFIG.skillCooldowns.barrier, remaining: s.barrierRemaining || 0, text: s.level < CONFIG.skills.barrier ? CONFIG.skillCooldowns.barrier + 's' : s.barrierActive ? 'PROTEGIDO' : s.barrierRemaining > 0 ? s.barrierRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.barrier + 's', active: s.barrierActive },
+    genki: { required: CONFIG.skills.genki, cost: CONFIG.skillCosts.genki, cooldown: CONFIG.skillCooldowns.genki, remaining: s.genkiRemaining || 0, text: s.level < CONFIG.skills.genki ? CONFIG.skillCooldowns.genki + 's' : s.genkiRemaining > 0 ? s.genkiRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.genki + 's' }
   };
   for (const button of document.querySelectorAll('[data-skill]')) {
     const skill = button.dataset.skill, state = skillState[skill]; if (!state) continue;
     const locked = s.level < state.required;
     button.classList.toggle('locked', locked); button.disabled = locked || state.remaining > 0 || (skill === 'kaioken' && s.kaiokenActive) || (skill === 'barrier' && s.barrierActive);
-    const label = button.querySelector('small'); if (label) label.textContent = state.text;
+    button.classList.toggle('active', Boolean(state.active));
+    const label = button.querySelector('small');
+    renderSkillMeta(label, state.cost, state.text);
     let cooldown = button.querySelector('.cooldown-overlay');
     if (!cooldown) { cooldown = document.createElement('span'); cooldown.className = 'cooldown-overlay'; cooldown.setAttribute('aria-hidden', 'true'); button.append(cooldown); }
     const remaining = state.remaining;
@@ -122,10 +138,11 @@ function updateUI() {
   const transformLocked = s.level < CONFIG.skills.transform;
   $('transformButton').disabled = transformLocked || (!s.transformed && (s.transformRemaining || 0) > 0);
   $('transformButton').classList.toggle('locked', transformLocked); $('transformButton').classList.toggle('active', s.transformed);
+  $('transformButton').classList.toggle('cooling', !s.transformed && s.transformRemaining > 0);
   let transformCooldown = $('transformButton').querySelector('.cooldown-overlay');
   if (!transformCooldown) { transformCooldown = document.createElement('span'); transformCooldown.className = 'cooldown-overlay'; transformCooldown.setAttribute('aria-hidden', 'true'); $('transformButton').append(transformCooldown); }
   transformCooldown.textContent = !s.transformed && s.transformRemaining > 0 ? s.transformRemaining.toFixed(1) + 's' : '';
-  $('transformText').textContent = transformLocked ? 'Libera NV. 5' : s.transformed ? 'ATIVO · 3,5 Ki/s' : s.transformRemaining > 0 ? 'Recarga ' + Math.ceil(s.transformRemaining) + 's' : 'Buff · 45s';
+  renderSkillMeta(document.getElementById('transformText'), CONFIG.skillCosts.transform, transformLocked ? CONFIG.skillCooldowns.transform + 's' : s.transformed ? 'ATIVO · 3,5 Ki/s' : s.transformRemaining > 0 ? Math.ceil(s.transformRemaining) + 's' : CONFIG.skillCooldowns.transform + 's');
   $('respawn').classList.toggle('hidden', s.hp > 0);
   $('respawnText').textContent = 'Retornando à vila em ' + Math.ceil(s.respawnRemaining) + 's';
 }
