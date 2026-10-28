@@ -149,7 +149,8 @@
         button.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === button));
         renderChatChannel();
       });
-    });`r`n    document.querySelector('.chat-input button')?.addEventListener('click', () => {
+    });
+    document.querySelector('.chat-input button')?.addEventListener('click', () => {
       const input = document.querySelector('.chat-input input');
       if (input?.value.trim()) {
         const line = document.createElement('p');
