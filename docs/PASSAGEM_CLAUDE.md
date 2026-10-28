@@ -248,7 +248,9 @@ São 14 mobs nos Campos, 8 na Cratera e 1 chefe. Respawn: comuns 12 s; chefe 75 
 
 Recompensas ao jogador que finaliza: `Zeni=100` chefe ou `5+floor(random()*5)` comum. Um teste de drop usa `random()<CHANCE_LOOT`; tipo cristal se outro `random()<0.3`, senão sucata; uma unidade. Teste separado `random()<0.008` gera uma semente15. Não há drop natural de semente30/50/100 nesta base. Loot dura45 s, exclusivo do responsável15 s, coleta por distância<60. Sem divisão de XP/loot por participação.
 
-Mundo 3300×2200 unidades; raio de colisão padrão do ator15; obstáculos circulares definidos em `OBSTACLES`. Regiões:
+Mundo 3300×2200 unidades; raio de colisão padrão do ator15; obstáculos circulares definidos em `OBSTACLES`.
+
+**Colisão atual (28/10/2026; substitui o que diz o parágrafo acima sobre colisão):** Namekusei tem 4608×3072 unidades. Onde dá para pisar é decidido em `public/shared/passagem.mjs`: a máscara do mar (`namek-passagem.mjs`) mais a base das casas e ruínas (`casaBloqueia` em `config.mjs`), conferidas nos pés do ator (`pesLivres`). Um passo de movimento é sempre `deslocar()`, a mesma função no servidor (`Game.move`, jogadores e mobs) e na predição local do cliente. **Regra:** obstáculo novo entra em `podeAndar`/`deslocar`, nunca numa checagem separada no cliente; se servidor e cliente divergirem, o personagem treme ao encostar no obstáculo (foi o que acontecia na beira da água e nas casas antes de 28/10). Regiões:
 
 | ID | Nome | x,y | largura,altura | PvP |
 | --- | --- | --- | --- | --- |
