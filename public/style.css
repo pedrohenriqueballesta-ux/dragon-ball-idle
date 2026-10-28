@@ -411,3 +411,101 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05101a}
   .mission-row{min-height:clamp(31px,7vh,38px)}
   .world-frame .skill{height:clamp(54px,9vh,66px)}.skill-art{height:clamp(24px,5vh,32px)}
 }
+
+/* Recortes da folha original anexada para as cinco técnicas. */
+.world-frame .skill{justify-content:flex-start;gap:3px;padding:5px 3px 4px;border:0;background:transparent;box-shadow:none;overflow:visible}
+.world-frame .skill:nth-child(n){border-color:transparent}
+.world-frame .skill-art{position:relative;flex:0 1 auto;width:min(100%,clamp(48px,6vw,96px));height:auto;aspect-ratio:1.03 / 1;display:block;overflow:hidden;border:0;border-radius:0;background:none;filter:none;text-shadow:none}
+.skill-art.kame-art,.skill-art.kaioken-art,.skill-art.barrier-art,.skill-art.transform-art,.skill-art.genki-art{background:none}
+.skill-art.kame-art::before,.skill-art.barrier-art::before,.skill-art.transform-art::before,.skill-art.genki-art::before{content:none}
+.skill-art>i.skill-sprite{position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;background-image:url('/assets/skills-anime-sheet.png');background-repeat:no-repeat;background-size:344% 236%;font-style:normal}
+.sprite-kame{background-position:4.6% 8.2%}
+.sprite-kaioken{background-position:50.1% 8.2%}
+.sprite-barrier{background-position:95.8% 8.2%}
+.sprite-transform{background-position:26.3% 88.7%}
+.sprite-genki{background-position:73.4% 88.7%}
+.world-frame .skill kbd{top:7px;left:7px;z-index:3;padding:1px 5px;min-width:24px;font-size:15px}
+.world-frame .skill.active{box-shadow:0 0 12px #ffca3a99}
+.world-frame .skill:focus-visible{outline-offset:1px}
+@media (min-width:761px) and (max-width:1350px){.world-frame .skill-art{width:min(100%,clamp(48px,5vw,66px))}.world-frame .skill kbd{top:3px;left:3px;min-width:19px;padding:1px 3px;font-size:12px}}
+@media (min-width:1001px) and (max-width:1350px){.world-frame .skill-art{width:min(100%,clamp(38px,4.2vw,56px))}}
+@media (min-width:761px) and (max-width:1000px){.world-frame .skill-art{width:min(100%,clamp(30px,4vw,40px))}}
+@media (min-width:1351px) and (max-height:820px){.world-frame .skill-art{width:min(100%,clamp(48px,5vw,72px))}}
+@media (max-width:760px){.world-frame .skill{gap:1px;padding:2px 1px}.world-frame .skill-art{width:min(100%,clamp(30px,8vw,40px))}.world-frame .skill kbd{top:2px;left:2px;min-width:14px;padding:0 2px;font-size:8px}.world-frame .skill strong{font-size:clamp(5px,1.7vw,7px)}.world-frame .skill small{font-size:clamp(4px,1.3vw,5px)}}
+.world-frame .cooldown-overlay{inset:0;display:flex;align-items:center;justify-content:center;background:transparent;color:#fff;font-size:clamp(14px,1.15vw,20px);text-shadow:0 1px 3px #000,0 0 7px #000;pointer-events:none}
+.world-frame .skill:disabled .skill-art,.world-frame .skill.locked .skill-art{filter:grayscale(1) brightness(.58)}
+.world-frame .skill:disabled .cooldown-overlay{background:transparent}
+.world-frame .skill.active,.world-frame .skill.transform.active{background:transparent!important;border:0!important;box-shadow:none!important}
+.world-frame .skill.active:hover,.world-frame .skill.transform.active:hover{background:transparent!important}
+.world-frame .skill-art{border-radius:14px;overflow:hidden}
+.skill-art>i.skill-sprite{background-size:357% 245%}
+.sprite-kame{background-position:5.4% 9.9%}
+.sprite-kaioken{background-position:50.4% 9.9%}
+.sprite-barrier{background-position:95.4% 9.9%}
+.sprite-transform{background-position:26.8% 87.1%}
+.sprite-genki{background-position:73.1% 87.1%}
+.world-frame .skill.active .skill-art{filter:none;box-shadow:0 0 7px var(--skill-glow),0 0 17px color-mix(in srgb,var(--skill-glow) 70%,transparent)}
+.world-frame .skill:focus-visible{outline:0!important;outline-offset:0}
+.world-frame .skill:focus-visible .skill-art{box-shadow:0 0 5px var(--skill-glow),0 0 11px color-mix(in srgb,var(--skill-glow) 55%,transparent)}
+.world-frame .skill small{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;white-space:nowrap;line-height:1.2;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.skill-cost{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border:1px solid #98782e;border-radius:999px;background:#101d2be8;color:#ffe08a;font-size:clamp(8px,.62vw,10px);font-weight:850;line-height:1.2;text-shadow:0 0 5px #f8c64455}
+.skill-cost::before{content:"◆";color:#ffd044;font-size:.72em}
+.skill-cost-detail{color:#c4d8e8;font-size:clamp(7px,.55vw,9px);font-weight:650}
+.skill-cooldown{display:inline-flex;align-items:center;padding:1px 5px;border:1px solid #3e82a8;border-radius:999px;background:#092338;color:#bcecff;font-size:clamp(8px,.62vw,10px);font-weight:800;line-height:1.2;text-shadow:0 0 5px #35bfff44}
+@media (min-width:761px) and (max-width:1350px){.world-frame .skill small{gap:3px}.skill-cost{padding:1px 4px;font-size:clamp(7px,.68vw,9px)}.skill-cost-detail,.skill-cooldown{font-size:clamp(6px,.58vw,8px)}}
+@media (max-width:760px){.world-frame .skill small{gap:2px}.skill-cost{gap:2px;padding:0 3px;font-size:clamp(6px,1.8vw,8px)}.skill-cost-detail,.skill-cooldown{font-size:clamp(6px,1.6vw,7px)}.skill-cooldown{padding:0 3px}}
+.world-frame .skill.locked,.world-frame .skill.locked:disabled{opacity:1}
+.world-frame .skill.locked strong,.world-frame .skill.locked small{color:#aab8c5}
+.world-frame .skill.locked:disabled .skill-art{filter:none}
+.world-frame .skill.locked .skill-sprite{filter:grayscale(1) brightness(.68);opacity:.68}
+.skill-lock{position:absolute;inset:0;z-index:3;display:none;place-items:center;border-radius:inherit;background:#06111b66;pointer-events:none}
+.skill.locked .skill-lock{display:grid}
+.skill-lock svg{display:block;width:clamp(22px,2.2vw,34px);height:clamp(22px,2.2vw,34px);color:#e0eff7;fill:none;stroke:currentColor;stroke-width:2;opacity:.82;filter:drop-shadow(0 1px 3px #000)}
+@media (max-width:760px){.skill-lock svg{width:21px;height:21px}}
+.skill-kame{--skill-glow:#28caff}.skill-kaioken{--skill-glow:#ff3434}.skill-barrier{--skill-glow:#4bddff}.skill-transform{--skill-glow:#ffca42}.skill-genki{--skill-glow:#9761ff}
+
+/* Recortes dos novos ícones da folha enviada, mantendo os custos dinâmicos da HUD. */
+.skill-art>i.skill-sprite{background-image:url('/assets/skills-dbz-icons.png');background-size:430% 325%}
+.sprite-kame{background-position:8% 6%}
+.sprite-kaioken{background-position:50.5% 6%}
+.sprite-barrier{background-position:93.6% 6%}
+.sprite-transform{background-position:27.8% 77.6%}
+.sprite-genki{background-position:72.6% 77.6%}
+
+
+
+/* Acabamento compacto e legível para custo e recarga das técnicas. */
+.world-frame .skill-art{width:min(100%,clamp(42px,5.2vw,82px))}
+.world-frame .skill small{gap:8px;margin-top:1px;font-size:clamp(9px,.68vw,11px);line-height:1.25}
+.skill-cost{display:inline-flex;align-items:baseline;gap:3px;padding:0;border:0;border-radius:0;background:transparent;color:#ffe3a1;font-size:inherit;font-weight:800;line-height:inherit;text-shadow:none}
+.skill-cost::before{content:none}
+.skill-cost-value{font-size:1em;font-weight:800;font-variant-numeric:tabular-nums}
+.skill-cost-unit{color:#c9aa61;font-size:.72em;font-weight:800;letter-spacing:.07em}
+.skill-cooldown{display:inline-flex;align-items:center;gap:0;padding:0 0 0 8px;border:0;border-left:1px solid #456275;border-radius:0;background:transparent;color:#cce1ee;font-size:clamp(8px,.62vw,10px);font-weight:650;line-height:inherit;text-shadow:none;font-variant-numeric:tabular-nums}
+@media (min-width:1001px) and (max-width:1350px){.world-frame .skill-art{width:min(100%,clamp(34px,4vw,48px))}.world-frame .skill small{gap:6px;font-size:clamp(8px,.7vw,9px)}.skill-cooldown{padding-left:6px;font-size:clamp(7px,.62vw,8px)}}
+@media (min-width:761px) and (max-width:1000px){.world-frame .skill-art{width:min(100%,clamp(27px,3.4vw,34px))}.world-frame .skill small{gap:4px;font-size:clamp(7px,.82vw,8px)}.skill-cooldown{padding-left:4px;font-size:7px}}
+@media (min-width:1351px) and (max-height:820px){.world-frame .skill-art{width:min(100%,clamp(42px,4.3vw,60px))}}
+@media (max-width:760px){.world-frame .skill-art{width:min(100%,clamp(26px,7vw,34px))}.world-frame .skill small{gap:4px;font-size:clamp(7px,1.9vw,8px)}.skill-cost-unit{font-size:.68em}.skill-cooldown{padding-left:4px;font-size:clamp(6px,1.7vw,7px)}}
+
+/* Cartões inteiros da arte de habilidades enviada, sem cortar título ou indicadores. */
+.world-frame .actionbar{left:50%;bottom:10px;width:min(570px,48vw);min-width:480px;max-width:calc(100vw - 16px);gap:2px;align-items:flex-start}
+.world-frame .skill,.world-frame .skill:nth-child(n){position:relative;flex:1 1 0;width:auto;min-width:0;min-height:0;height:auto;aspect-ratio:.89 / 1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible;opacity:1}
+.world-frame .skill:hover,.world-frame .skill.active,.world-frame .skill.active:hover,.world-frame .skill:disabled{border:0;background:transparent;box-shadow:none;opacity:1}
+.world-frame .skill-art{position:relative;flex:0 0 auto;width:100%;max-width:none;height:auto;aspect-ratio:.89 / 1;display:block;overflow:hidden;border:0;border-radius:0;background:none;filter:none;text-shadow:none}
+.world-frame .skill-art>i.skill-sprite{position:absolute;inset:0;display:block;width:100%;height:100%;background-image:url('/assets/skills-dbz-icons-transparent.png');background-repeat:no-repeat;background-size:351.5% 210.3%;font-style:normal}
+.world-frame .skill-kame .skill-sprite{background-position:5.5% 3.4%}
+.world-frame .skill-kaioken .skill-sprite{background-position:51% 3.4%}
+.world-frame .skill-barrier .skill-sprite{background-position:96.6% 3.4%}
+.world-frame .skill-transform .skill-sprite{background-size:351.5% 215.6%;background-position:26.2% 96.4%}
+.world-frame .skill-genki .skill-sprite{background-size:351.5% 215.6%;background-position:73.9% 96.4%}
+.world-frame .skill kbd{display:none}
+.world-frame .skill>strong,.world-frame .skill>small{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.world-frame .skill-lock{inset:0;border-radius:0;background:#07111a55}
+.world-frame .skill-lock svg{width:clamp(22px,3vw,44px);height:clamp(22px,3vw,44px);opacity:.82}
+.world-frame .skill.locked .skill-sprite{filter:grayscale(1) brightness(.68);opacity:.85}
+.world-frame .skill.cooling .skill-sprite{filter:grayscale(.9) brightness(.58);opacity:.82}
+.world-frame .skill:disabled .skill-art,.world-frame .skill.locked .skill-art{filter:none}
+.world-frame .skill.active .skill-art{filter:drop-shadow(0 0 8px #ffd04c) brightness(1.08)}
+.world-frame .skill .cooldown-overlay{inset:42% 12% auto;min-height:0;width:auto;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font-size:clamp(11px,1vw,16px);font-weight:900;text-shadow:0 1px 3px #000,0 0 6px #000;box-shadow:none}
+@media(max-width:1000px){.world-frame .actionbar{width:min(550px,calc(100vw - 24px));min-width:0;bottom:7px;gap:2px}}
+@media(max-width:760px){.world-frame .actionbar{width:min(92vw,calc(100vw - 24px));min-width:0;bottom:4px;gap:1px}.world-frame .skill .cooldown-overlay{inset:42% 7% auto;min-height:0;padding:0;font-size:clamp(8px,2.5vw,11px)}}
