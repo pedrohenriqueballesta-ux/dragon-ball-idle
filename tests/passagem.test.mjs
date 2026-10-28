@@ -1,14 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, PLANETS } from '../public/shared/index.mjs';
+import { naEscala } from '../public/shared/config.mjs';
 import { podeAndar, emTerra } from '../public/shared/passagem.mjs';
 
 const world = () => new Game({ now: 1000, populate: false, random: () => 0.99 });
 
 test('Namekusei: mar bloqueia, praça da Vila e chegada são caminháveis, Terra é livre', () => {
   assert.equal(podeAndar('namek', 60, 60), false, 'canto do mapa é mar');
-  assert.equal(podeAndar('namek', 3000, 1860), false, 'mar entre a nave e o campo de batalha');
-  assert.equal(podeAndar('namek', 1140, 2940), false, 'mar ao sul');
+  // Pontos em px da imagem do solo, levados para o mundo pela escala.
+  assert.equal(podeAndar('namek', naEscala(3000), naEscala(1860)), false, 'mar entre a nave e o campo de batalha');
+  assert.equal(podeAndar('namek', naEscala(1140), naEscala(2940)), false, 'mar ao sul');
   const { x, y } = PLANETS.namek.spawn;
   assert.equal(podeAndar('namek', x, y), true, 'chegada na praça da Vila');
   assert.equal(podeAndar('terra', 60, 60), true);
@@ -48,7 +50,7 @@ test('a predição do cliente para na beira da água no mesmo ponto que o servid
   const game = world(), p = game.addPlayer('a');
   p.planet = 'namek'; p.x = PLANETS.namek.spawn.x; p.y = PLANETS.namek.spawn.y;
   for (let i = 0; i < 400; i++) { game.setInput(p.id, { x: 1, y: 0 }); game.tick(0.05); }
-  assert.ok(p.x > 900 && p.x < 1100, 'parou no mar a leste da Vila, não na borda do mapa');
+  assert.ok(p.x > naEscala(900) && p.x < naEscala(1100), 'parou no mar a leste da Vila, não na borda do mapa (x=' + Math.round(p.x) + ')');
   // Encostado na água, a predição não pode avançar mais do que o servidor aceitaria.
   const [px, py] = deslocar('namek', p.x, p.y, 1, 0, p.stats.mobility * 0.2);
   assert.deepEqual([px, py], [p.x, p.y]);

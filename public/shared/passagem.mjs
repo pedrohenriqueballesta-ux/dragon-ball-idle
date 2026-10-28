@@ -1,7 +1,7 @@
 // Onde dá para andar em cada planeta. Namekusei usa a máscara gerada da imagem do solo
 // (namek-passagem.mjs); os demais planetas são livres.
 import { NAMEK_PASSAGEM } from './namek-passagem.mjs';
-import { OBSTACLES, PLANETS, casaBloqueia } from './config.mjs';
+import { ESCALA_MUNDO, OBSTACLES, PLANETS, casaBloqueia } from './config.mjs';
 
 function decodificar({ cols, rows, linhas }) {
   const grade = new Uint8Array(cols * rows);
@@ -16,7 +16,8 @@ function decodificar({ cols, rows, linhas }) {
   return grade;
 }
 
-const MASCARAS = { namek: { ...NAMEK_PASSAGEM, grade: decodificar(NAMEK_PASSAGEM) } };
+// A máscara foi gerada em px da imagem do solo; cada célula cresce com a escala do mundo.
+const MASCARAS = { namek: { ...NAMEK_PASSAGEM, cellW: NAMEK_PASSAGEM.cellW * ESCALA_MUNDO, cellH: NAMEK_PASSAGEM.cellH * ESCALA_MUNDO, grade: decodificar(NAMEK_PASSAGEM) } };
 
 // Só o terreno (mar/lagos), sem contar casas e outras construções.
 export function emTerra(planet, x, y) {
