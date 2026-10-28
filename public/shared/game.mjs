@@ -4,7 +4,7 @@ import { CONFIG, ZONES, MERCHANT, OBSTACLES, PLANETS, zoneAt } from './config.mj
 import { clamp, distance, norm, segmentDistance } from './math.mjs';
 import { statsFor, xpForLevel, bagWeight, createPlayer, exportPlayer as serializePlayer } from './characters.mjs';
 import { mobStats, spawnPoints } from './enemies.mjs';
-import { pesLivres } from './passagem.mjs';
+import { pesLivres, caminhoPorTerra } from './passagem.mjs';
 
 export class Game {
   constructor({ now = Date.now() / 1000, random = Math.random, populate = true } = {}) {
@@ -143,7 +143,7 @@ export class Game {
     this.emit('ki', { x: p.x, y: p.y, playerId: p.id }); return { ok: true };
   }
   buy(p, item) {
-    if (distance(p, MERCHANT) > 180) return this.reject(p, 'Aproxime-se do mercado na Vila do Lago.');
+    if (distance(p, MERCHANT) > 180) return this.reject(p, 'Aproxime-se do mercado na Vila Namekiana.');
     const price = CONFIG.prices[item]; if (!price) return { ok: false };
     if (p.zeni < price) return this.reject(p, 'Zeni insuficiente.');
     if (!this.addItem(p, item)) return this.reject(p, 'A mochila está sem capacidade.');
@@ -256,7 +256,17 @@ export class Game {
     if (attempt(entity.x, ny)) entity.y = ny;
     entity.moving = Math.hypot(dx, dy) > 0.05;
   }
+  // Em planetas com água, segue um caminho por terra até o alvo (recalculado quando o alvo
+  // se move ou a cada 1,5 s); sem caminho, vai em linha reta como antes.
   steer(entity, target, dt, speed) {
+    if (entity.planet === 'namek') {
+      const rota = entity.rota;
+      const velha = !rota || this.time - rota.em > 1.5 || Math.hypot(rota.alvo.x - target.x, rota.alvo.y - target.y) > 60;
+      if (velha) entity.rota = { alvo: { x: target.x, y: target.y }, em: this.time, pontos: caminhoPorTerra(entity.planet, entity, target) || [] };
+      const pontos = entity.rota.pontos;
+      while (pontos.length > 1 && Math.hypot(pontos[0].x - entity.x, pontos[0].y - entity.y) < 30) pontos.shift();
+      if (pontos.length > 1) target = pontos[0];
+    }
     let dir = norm(target.x - entity.x, target.y - entity.y);
     const obstacle = OBSTACLES.find(o => segmentDistance(o.x, o.y, entity.x, entity.y, entity.x + dir.x * 90, entity.y + dir.y * 90) < o.r + 22 && distance(entity, o) < o.r + 100);
     if (obstacle) {

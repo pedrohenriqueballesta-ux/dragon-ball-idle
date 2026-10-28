@@ -10,13 +10,17 @@ export const CONFIG = Object.freeze({
   skillCooldowns: { kame: 5, kaioken: 12, barrier: 8, transform: 30, genki: 45 },
   skills: { ki: 2, dash: 2, kame: 3, kaioken: 2, barrier: 2, transform: 5, genki: 10 }
 });
+// Regiões de Namekusei, posicionadas sobre o mapa da lore (assets/namek/solo.webp).
+// Os ids são usados pelas regras (vila = segura, campos/cratera = caça, arena = PvP): mude
+// posição e nome à vontade, mas não os ids.
 export const ZONES = [
-  { id: 'vila', name: 'Vila do Lago', x: 70, y: 70, w: 650, h: 540, pvp: false },
-  { id: 'campos', name: 'Campos da Terra', x: 800, y: 120, w: 1780, h: 1070, pvp: false },
-  { id: 'cratera', name: 'Cratera Rubra', x: 700, y: 1320, w: 1880, h: 700, pvp: false },
-  { id: 'arena', name: 'Fronteira de Combate', x: 2720, y: 220, w: 490, h: 1750, pvp: true }
+  { id: 'vila', name: 'Vila Namekiana', x: 150, y: 1050, w: 750, h: 600, pvp: false },
+  { id: 'campos', name: 'Planícies de Namekusei', x: 1250, y: 580, w: 1900, h: 1220, pvp: false },
+  { id: 'cratera', name: 'Campo de Batalha', x: 1350, y: 1850, w: 2800, h: 950, pvp: false },
+  { id: 'arena', name: 'Planalto da Nave do Freeza', x: 3450, y: 650, w: 1100, h: 1100, pvp: true }
 ];
-export const MERCHANT = { x: 430, y: 300 };
+// Mercador na beira da praça da Vila Namekiana.
+export const MERCHANT = { x: 560, y: 1290 };
 // Árvores e pedras do mapa antigo saíram com o solo novo de Namekusei (28/10).
 // Os novos obstáculos entram nas próximas etapas, posicionados sobre a imagem do solo.
 export const OBSTACLES = [];
