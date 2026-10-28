@@ -1,5 +1,6 @@
 import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, HOUSES, zoneAt } from '../shared/index.mjs';
 import { deslocar } from '../shared/passagem.mjs';
+import { frenteDaCasa } from '../shared/config.mjs';
 import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawHouse, drawHouseGround, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
 import { CAMERA, clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
@@ -367,6 +368,13 @@ function drawMinimap(onNamek = true, world = PLANETS.namek) {
   if (self) drawMiniSelf(self.x * sx, self.y * sy, self.facing);
   mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
 }
+// Ordem de desenho de um personagem: pela posição dos pés, mas quem pisa à frente da curva da base
+// de uma casa (nas laterais a base sobe) vai na frente dela, mesmo acima da linha da base.
+function profundidade(pos, onNamek) {
+  let y = pos.y;
+  if (onNamek) for (const c of HOUSES) if (pos.y < c.y) { const f = frenteDaCasa(c, pos.x); if (f !== null && pos.y >= f) y = Math.max(y, c.y + 0.01); }
+  return y;
+}
 function frame(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height); ctx.imageSmoothingEnabled = false;
@@ -402,8 +410,8 @@ function frame(now) {
     ...(onNamek ? [{ y: MERCHANT.y, draw: () => drawVendor(ctx, MERCHANT) }] : []),
     // Casas entram na ordem de profundidade pela base: quem está acima da base passa por trás.
     ...(onNamek ? HOUSES.map(c => ({ y: c.y, draw: () => drawHouse(ctx, c) })) : []),
-    ...snapshot.players.map(p => ({ y: renderPositions.get(p.id).y, draw: () => drawPlayer(p, renderPositions.get(p.id), time) })),
-    ...snapshot.mobs.map(m => ({ y: renderPositions.get(m.id).y, draw: () => drawMob(m, renderPositions.get(m.id), time) }))
+    ...snapshot.players.map(p => ({ y: profundidade(renderPositions.get(p.id), onNamek), draw: () => drawPlayer(p, renderPositions.get(p.id), time) })),
+    ...snapshot.mobs.map(m => ({ y: profundidade(renderPositions.get(m.id), onNamek), draw: () => drawMob(m, renderPositions.get(m.id), time) }))
   ].sort((a, b) => a.y - b.y);
   for (const d of drawables) if (d.y > camera.y - 150 && d.y < camera.y + height / camera.scale + 350) d.draw();
   for (const s of snapshot.projectiles) {

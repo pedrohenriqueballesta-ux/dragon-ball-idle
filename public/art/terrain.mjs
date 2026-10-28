@@ -1,5 +1,6 @@
 // Cenário: grama, caminhos, pedras, árvores e a barraca do mercador.
 import { art, loaded } from './assets.mjs';
+import { ENTERRA_CASA } from '../shared/config.mjs';
 
 const patterns = new WeakMap();
 export const CLEARINGS = [
@@ -136,7 +137,7 @@ export function drawHouseGround() {}
 export function drawHouse(ctx, house) {
   const image = (house.ruina ? art.namekRuinas : art.namekCasas)[house.sprite - 1];
   if (!loaded(image)) return false;
-  const h = house.w * image.naturalHeight / image.naturalWidth, enterra = Math.round(house.w * 0.035);
+  const h = house.w * image.naturalHeight / image.naturalWidth, enterra = Math.round(house.w * ENTERRA_CASA);
   ctx.save();
   ctx.imageSmoothingEnabled = house.w * ctx.getTransform().a < image.naturalWidth; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, Math.round(house.x - house.w / 2), Math.round(house.y - h + enterra), house.w, h);

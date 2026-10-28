@@ -57,11 +57,18 @@ test('a predição do cliente para na beira da água no mesmo ponto que o servid
 });
 
 test('casas da Vila bloqueiam pela base, ficam em terra e não tapam a chegada nem o mercador', async () => {
-  const { HOUSES, MERCHANT } = await import('../public/shared/config.mjs');
+  const { HOUSES, MERCHANT, frenteDaCasa } = await import('../public/shared/config.mjs');
   assert.ok(HOUSES.length >= 4);
   for (const c of HOUSES) {
-    assert.equal(podeAndar('namek', c.x, c.y - c.w * 0.15), false, 'meio da base da casa ' + c.sprite + ' bloqueia');
-    assert.equal(podeAndar('namek', c.x, c.y + 20), true, 'frente da porta da casa ' + c.sprite + ' fica livre');
+    const nome = (c.ruina ? 'ruína ' : 'casa ') + c.sprite, f = frenteDaCasa(c, c.x);
+    assert.equal(podeAndar('namek', c.x, f - 25), false, 'logo atrás da frente da base da ' + nome + ' bloqueia');
+    assert.equal(podeAndar('namek', c.x, c.y + 20), true, 'frente da porta da ' + nome + ' fica livre');
+    // A lateral rente à base também bloqueia (antes o retângulo deixava os lados livres e o
+    // personagem entrava na parede).
+    if (!c.ruina) for (const lado of [-1, 1]) {
+      const x = c.x + lado * c.w * 0.4, fl = frenteDaCasa(c, x);
+      assert.equal(podeAndar('namek', x, fl - 8), false, 'lateral da ' + nome + ' bloqueia');
+    }
   }
   const { x, y } = PLANETS.namek.spawn;
   assert.equal(podeAndar('namek', x, y), true);
