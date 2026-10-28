@@ -93,6 +93,7 @@ function updateUI() {
   $('regionName').textContent = z?.name || 'Trilhas da Terra'; $('regionType').textContent = z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE';
   document.querySelector('.region').classList.toggle('pvp', Boolean(z?.pvp));
   $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');
+  $('coordsText').textContent = 'X: ' + Math.round(p.x) + '   Y: ' + Math.round(p.y);
   $('missionKills').textContent = Math.min(10, s.kills || 0);
   $('missionMaterials').textContent = (s.inventory.scrap || 0) + (s.inventory.crystal || 0);
   $('missionLevel').textContent = s.level;
