@@ -24,7 +24,7 @@
             <span class="currency token"><b>●</b><strong id="hudTokens">0</strong><em>+</em></span>
           </div>
           <div class="player-hud"><img class="portrait" src="/assets/goku-avatar.png" alt="Avatar de Goku"><div class="hud-details"><div class="hud-title"><strong id="playerName">Goku</strong><span id="levelBadge">NV. 1</span></div><div class="resource health"><i id="hpBar"></i><span id="hpText">Vida</span></div><div class="resource energy"><i id="kiBar"></i><span id="kiText">Ki</span></div><div class="resource experience"><i id="hudXpBar"></i><span id="hudXpText">EXP · 0%</span></div></div></div>
-          <div class="region"><span id="regionType">REGIÃO PVE</span><strong id="regionName">Vila do Lago</strong><small id="onlineText">Servidor local</small></div>
+          <div class="region"><span id="regionType">REGIÃO PVE</span><strong id="regionName">Vila do Lago</strong><small id="coordsText">X: 0&nbsp;&nbsp;Y: 0</small><small id="onlineText" class="visually-hidden">Servidor local</small></div>
           <div class="map-wrap" aria-label="Minimapa e bússola"><span class="compass north">N</span><span class="compass east">E</span><span class="compass south">S</span><span class="compass west">W</span><canvas id="minimap" width="180" height="180" aria-label="Minimapa"></canvas></div>
         </div>
         <div class="hud-edge-tools" aria-label="Ferramentas rápidas">
@@ -149,7 +149,8 @@
         button.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === button));
         renderChatChannel();
       });
-    });`r`n    document.querySelector('.chat-input button')?.addEventListener('click', () => {
+    });
+    document.querySelector('.chat-input button')?.addEventListener('click', () => {
       const input = document.querySelector('.chat-input input');
       if (input?.value.trim()) {
         const line = document.createElement('p');
