@@ -42,3 +42,14 @@ test('regiões e mobs de Namekusei ficam em terra firme, e o mercador na Vila', 
   const { x, y } = PLANETS.namek.spawn;
   assert.ok(x > vila.x && x < vila.x + vila.w && y > vila.y && y < vila.y + vila.h, 'chegada dentro da Vila (segura)');
 });
+
+test('a predição do cliente para na beira da água no mesmo ponto que o servidor', async () => {
+  const { deslocar } = await import('../public/shared/passagem.mjs');
+  const game = world(), p = game.addPlayer('a');
+  p.planet = 'namek'; p.x = PLANETS.namek.spawn.x; p.y = PLANETS.namek.spawn.y;
+  for (let i = 0; i < 400; i++) { game.setInput(p.id, { x: 1, y: 0 }); game.tick(0.05); }
+  assert.ok(p.x > 900 && p.x < 1100, 'parou no mar a leste da Vila, não na borda do mapa');
+  // Encostado na água, a predição não pode avançar mais do que o servidor aceitaria.
+  const [px, py] = deslocar('namek', p.x, p.y, 1, 0, p.stats.mobility * 0.2);
+  assert.deepEqual([px, py], [p.x, p.y]);
+});

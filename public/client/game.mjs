@@ -1,4 +1,5 @@
 import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, zoneAt } from '../shared/index.mjs';
+import { deslocar } from '../shared/passagem.mjs';
 import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
 import { clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
@@ -346,15 +347,6 @@ function drawMinimap(onNamek = true, world = PLANETS.namek) {
   for (const p of snapshot.players) { mctx.fillStyle = p.id === playerId ? '#fff5b4' : '#80d6ea'; mctx.beginPath();mctx.arc(p.x*sx,p.y*sy,2.5,0,Math.PI*2);mctx.fill(); }
   mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
 }
-function predictLocal(x, y, dx, dy, dist, world, onNamek) {
-  const r = 15;
-  const ok = (nx, ny) => nx >= r && ny >= r && nx <= world.w - r && ny <= world.h - r && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - nx, o.y - ny) < o.r + r));
-  let ox = x, oy = y;
-  const nx = x + dx * dist, ny = y + dy * dist;
-  if (ok(nx, y)) ox = nx;
-  if (ok(ox, ny)) oy = ny;
-  return [ox, oy];
-}
 function frame(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height); ctx.imageSmoothingEnabled = false;
@@ -368,7 +360,7 @@ function frame(now) {
   for (const entity of [...snapshot.players, ...snapshot.mobs]) {
     if (entity.id === playerId && !entity.dead && !entity.dashing && !entity.charge) {
       const iv = inputVector(); let px = entity.x, py = entity.y;
-      if (iv.x || iv.y) { const el = Math.min(0.2, (now - receivedAt) / 1000); [px, py] = predictLocal(entity.x, entity.y, iv.x, iv.y, (snapshot.self?.stats.mobility || 175) * el, world, onNamek); }
+      if (iv.x || iv.y) { const el = Math.min(0.2, (now - receivedAt) / 1000); [px, py] = deslocar(snapshot.planet, entity.x, entity.y, iv.x, iv.y, (snapshot.self?.stats.mobility || 175) * el); }
       screenPosition({ ...entity, x: px, y: py }, dt);
     } else screenPosition(entity, dt);
   }
