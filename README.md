@@ -61,10 +61,67 @@ todo código compartilhado fica dentro de `public/`.
 - Conferir a sintaxe dos módulos: `npm run check`
 - Prévia das animações: com o servidor ligado, abra `http://localhost:3000/animacoes.html`
 
-## Contribuindo
+## Contribuindo (passo a passo)
 
-Somos um time de 4 devs. **Ninguém faz push direto na `main`**: cada mudança entra
-por branch + Pull Request. O passo a passo está em [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Somos um time de 4 devs. A regra de ouro: **ninguém faz push direto na `main`** —
+cada mudança entra por branch + Pull Request, pra ninguém quebrar o trabalho do outro.
+
+### Uma vez só (cada dev)
+
+```bash
+git clone https://github.com/pedrohenriqueballesta-ux/dragon-ball-idle.git
+cd dragon-ball-idle
+```
+
+### Toda vez que for trabalhar
+
+**1. Pegue a versão mais nova** (o que os outros já enviaram):
+
+```bash
+git checkout main
+git pull
+```
+
+**2. Crie uma branch só sua**, com um nome do que vai fazer (ex.: `arrumar-goku`):
+
+```bash
+git checkout -b minha-mudanca
+```
+
+**3. Mexa no código.** Ao terminar um pedaço, salve (pode repetir quantas vezes quiser):
+
+```bash
+git add .
+git commit -m "descreva o que fez"
+```
+
+**4. Antes de enviar, confira que não quebrou nada:**
+
+```bash
+npm run check
+npm test
+```
+
+**5. Envie sua branch pro GitHub:**
+
+```bash
+git push -u origin minha-mudanca
+```
+
+**6. Abra o Pull Request:** no site do repositório, clique no aviso amarelo
+**"Compare & pull request"** (ou aba **Pull requests** → **New pull request**,
+com **base** = `main` e **compare** = sua branch) → **Create pull request**.
+
+**7. Juntar:** outro dev revisa e alguém clica no botão verde **Merge**.
+Sua mudança entra na `main` pra todo mundo.
+
+**8. Próxima tarefa?** Volte ao passo 1 (sempre com a `main` atualizada antes).
+
+> Se terminal e comandos forem complicados pra alguém, dá pra usar o
+> [GitHub Desktop](https://desktop.github.com/): ele faz clonar, branch, commit,
+> push e abrir PR tudo por botões.
+
+A versão mais detalhada deste guia também está em [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Status
 
