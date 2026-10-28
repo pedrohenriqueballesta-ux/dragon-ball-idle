@@ -1,8 +1,7 @@
 // Onde dá para andar em cada planeta. Namekusei usa a máscara gerada da imagem do solo
 // (namek-passagem.mjs); os demais planetas são livres.
 import { NAMEK_PASSAGEM } from './namek-passagem.mjs';
-import { ESCALA_MUNDO } from './config.mjs';
-import { casaBloqueia } from './config.mjs';
+import { ESCALA_MUNDO, OBSTACLES, PLANETS, casaBloqueia } from './config.mjs';
 
 function decodificar({ cols, rows, linhas }) {
   const grade = new Uint8Array(cols * rows);
@@ -42,6 +41,22 @@ export function pesLivres(planet, x, y, radius) {
   const r = radius * 0.6;
   return podeAndar(planet, x, y) && podeAndar(planet, x + r, y) && podeAndar(planet, x - r, y)
     && podeAndar(planet, x, y + r) && podeAndar(planet, x, y - r);
+}
+
+// Um passo de movimento: eixo X e depois Y, cada um só se o destino estiver dentro do mundo,
+// longe dos obstáculos e com os pés em terra. Servidor (Game.move) e predição do cliente usam
+// esta mesma regra; se divergirem, o cliente anda onde o servidor não deixa e o personagem treme.
+export function deslocar(planet, x, y, dx, dy, dist, radius = 15) {
+  const world = PLANETS[planet] || PLANETS.namek, onNamek = planet === 'namek';
+  // Quem já está num ponto bloqueado (save antigo, mob nascido na água) pode sair dele.
+  const preso = !pesLivres(planet, x, y, radius);
+  const livre = (nx, ny) => nx >= radius && ny >= radius && nx <= world.w - radius && ny <= world.h - radius
+    && (!onNamek || !OBSTACLES.some(o => Math.hypot(o.x - nx, o.y - ny) < o.r + radius))
+    && (preso || pesLivres(planet, nx, ny, radius));
+  const nx = x + dx * dist, ny = y + dy * dist;
+  if (livre(nx, y)) x = nx;
+  if (livre(x, ny)) y = ny;
+  return [x, y];
 }
 
 // Caminho por terra entre dois pontos (busca em largura numa grade grossa da máscara).

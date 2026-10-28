@@ -1,4 +1,5 @@
 // Dados do mundo e números de balanceamento do protótipo. Todos ajustáveis.
+import { PEGADAS } from './pegadas-casas.mjs';
 
 // Escala do mundo de Namekusei: quantas unidades do jogo vale 1 px da imagem do solo
 // (assets/namek/solo.webp, 4608x3072). Ela amplia o terreno e tudo que está posto nele:
@@ -43,6 +44,8 @@ export const OBSTACLES = [];
 export function zoneAt(x, y) {
   return ZONES.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || null;
 }
+// Quanto a casa afunda no chão ao ser desenhada, em fração da largura (drawHouse usa o mesmo).
+export const ENTERRA_CASA = 0.035;
 // Casas dos namekuseijins na Vila (sprites em assets/namek/casas/casa_N.png).
 // Cada uma fica num terreiro de terra batida pintado no próprio solo.webp por
 // ~/idle-dbz/ferramentas/assentar_casas.py: ao mudar posição ou tamanho aqui, gere o solo de novo.
@@ -61,10 +64,24 @@ export const HOUSES = [
   { sprite: 6, x: 2980, y: 2510, w: 290, ruina: true },
   { sprite: 4, x: 3400, y: 2650, w: 150, ruina: true },
   { sprite: 2, x: 3700, y: 2370, w: 190, ruina: true }
-].map(c => ({ ...c, x: naEscala(c.x), y: naEscala(c.y), w: c.w * ESCALA_CONSTRUCOES }));
-// A parte da casa que ocupa o chão: um retângulo raso na base, recuado nas laterais.
+].map(c => comPegada({ ...c, x: naEscala(c.x), y: naEscala(c.y), w: c.w * ESCALA_CONSTRUCOES }));
+// Pegada no chão: a base vista de cima é uma elipse, e a curva de baixo do desenho (PEGADAS,
+// tirada do PNG) é a metade da frente dela. Fica em coordenadas do mundo junto de cada casa.
+function comPegada(c) {
+  const p = PEGADAS[c.ruina ? 'ruina' : 'casa'][c.sprite];
+  const topo = Math.round(c.y - c.w * p.alto + Math.round(c.w * ENTERRA_CASA)), esq = c.x - c.w / 2;
+  return { ...c, pegada: { esq: esq + p.x0 * c.w, dir: esq + p.x1 * c.w, centro: topo + p.centro * c.w, frente: p.frente.map(f => topo + f * c.w) } };
+}
+// Onde fica a frente da base da casa na coluna x (null fora dela).
+export function frenteDaCasa(c, x) {
+  const { esq, dir, frente } = c.pegada;
+  if (x <= esq || x >= dir) return null;
+  const t = (x - esq) / (dir - esq) * (frente.length - 1), i = Math.floor(t), j = Math.min(i + 1, frente.length - 1);
+  return frente[i] + (frente[j] - frente[i]) * (t - i);
+}
+// A casa ocupa o chão de trás da elipse (2 × centro − frente) até a frente.
 export function casaBloqueia(x, y) {
-  return HOUSES.some(c => Math.abs(x - c.x) < c.w * 0.42 && y < c.y - 6 * ESCALA_CONSTRUCOES && y > c.y - c.w * 0.32);
+  return HOUSES.some(c => { const f = frenteDaCasa(c, x); return f !== null && y < f && y > 2 * c.pegada.centro - f; });
 }
 // Planetas (instâncias). 'terra' é o spawn verde pequeno e seguro (tela inicial);
 // 'namek' é o mundo atual com zonas, inimigos e combate. Só se troca de planeta por TP.
