@@ -30,3 +30,9 @@ export const OBSTACLES = [
 export function zoneAt(x, y) {
   return ZONES.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || null;
 }
+// Planetas (instâncias). 'terra' é o spawn verde pequeno e seguro (tela inicial);
+// 'namek' é o mundo atual com zonas, inimigos e combate. Só se troca de planeta por TP.
+export const PLANETS = {
+  terra: { id: 'terra', name: 'Terra', w: 1100, h: 760, spawn: { x: 550, y: 380 } },
+  namek: { id: 'namek', name: 'Namekusei', w: CONFIG.width, h: CONFIG.height, spawn: { x: 430, y: 440 } }
+};

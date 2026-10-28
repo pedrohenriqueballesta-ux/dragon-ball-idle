@@ -509,3 +509,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05101a}
 .world-frame .skill .cooldown-overlay{inset:42% 12% auto;min-height:0;width:auto;padding:0;border:0;border-radius:0;background:transparent;color:#fff;font-size:clamp(11px,1vw,16px);font-weight:900;text-shadow:0 1px 3px #000,0 0 6px #000;box-shadow:none}
 @media(max-width:1000px){.world-frame .actionbar{width:min(550px,calc(100vw - 24px));min-width:0;bottom:7px;gap:2px}}
 @media(max-width:760px){.world-frame .actionbar{width:min(92vw,calc(100vw - 24px));min-width:0;bottom:4px;gap:1px}.world-frame .skill .cooldown-overlay{inset:42% 7% auto;min-height:0;padding:0;font-size:clamp(8px,2.5vw,11px)}}
+/* Menu de Planetas (viagem entre planetas). */
+#planetsDialog .planets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 14px 0 6px; }
+#planetsDialog .planet-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border-radius: 12px; background: #11202088; border: 1px solid #2d4a44; color: inherit; text-align: center; font: inherit; }
+#planetsDialog .planet-card.current { border-color: #6fd08c; box-shadow: 0 0 0 1px #6fd08c55; cursor: default; }
+#planetsDialog .planet-card.soon { opacity: .5; }
+#planetsDialog .planet-card strong { font-size: 14px; }
+#planetsDialog .planet-card small { font-size: 11px; opacity: .8; }
+#planetsDialog .planet-ball { width: 46px; height: 46px; border-radius: 50%; box-shadow: inset -6px -6px 10px #0005; }
+#planetsDialog .planet-ball.terra { background: radial-gradient(circle at 35% 30%, #bfe7ff, #0b3b6b); }
+#planetsDialog .planet-ball.namek { background: radial-gradient(circle at 35% 30%, #d6ffcf, #15611f); }
+#planetsDialog .planet-ball.vegeta { background: radial-gradient(circle at 35% 30%, #ffe0b0, #6b3b12); }
+#planetsDialog .planet-ball.freeza { background: radial-gradient(circle at 35% 30%, #f1d0ff, #3a1a5e); }
