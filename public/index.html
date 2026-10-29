@@ -9,214 +9,28 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="Dragon Ball Idle"><span class="brand-mark">悟</span><span>DRAGON BALL <b>IDLE</b><small>CAMINHO DO GUERREIRO</small></span></a>
-    <div class="top-right"><span class="version">PROTÓTIPO 0.6</span><span id="connection" class="connection">Conectando</span><button id="helpButton" class="icon-button" title="Controles e regras">?</button><button id="panelButton" class="panel-toggle" title="Abrir personagem e caça" aria-controls="panel" aria-expanded="false">☰ <span>Personagem e caça</span></button></div>
-  </header>
-  <main class="layout">
-    <section class="world-column" aria-label="Mundo do jogo">
-      <div class="world-frame">
-        <canvas id="world" aria-label="Mapa do jogo. Use WASD ou as setas para movimentar." tabindex="0"></canvas>
-        <svg class="hud-symbols" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-          <symbol id="hud-lock" viewBox="0 0 48 48"><rect x="9" y="21" width="30" height="23" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M15 21v-7a9 9 0 0 1 18 0v7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="31" r="2.5" fill="currentColor"/><path d="M24 34v4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
-          <symbol id="hud-person" viewBox="0 0 48 48"><circle cx="24" cy="14" r="7" fill="currentColor"/><path d="M9 41c0-9 6-15 15-15s15 6 15 15v2H9z" fill="currentColor"/></symbol>
-          <symbol id="hud-bag" viewBox="0 0 48 48"><path d="M13 15h22l4 27H9z" fill="currentColor"/><path d="M17 16v-4a7 7 0 0 1 14 0v4M17 24h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
-          <symbol id="hud-scroll" viewBox="0 0 48 48"><path d="M12 7h28v32H12a5 5 0 0 1 0-10h28M17 14h16M17 21h16M17 28h12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6h6v7H8zM8 35h6v7H8z" fill="currentColor"/></symbol>
-          <symbol id="hud-flame" viewBox="0 0 48 48"><path d="M25 3c3 10-7 12-4 20 3-2 5-5 6-9 9 8 14 15 10 24-3 6-8 8-14 8S11 42 9 35C6 25 15 19 19 11c0 8 3 10 5 12 4-5 3-12 1-20z" fill="currentColor"/></symbol>
-          <symbol id="hud-group" viewBox="0 0 48 48"><circle cx="24" cy="14" r="7" fill="currentColor"/><circle cx="9" cy="18" r="5" fill="currentColor"/><circle cx="39" cy="18" r="5" fill="currentColor"/><path d="M11 42c0-9 5-15 13-15s13 6 13 15v2H11zM2 41c0-7 3-11 9-12M46 41c0-7-3-11-9-12" fill="currentColor"/></symbol>
-          <symbol id="hud-chart" viewBox="0 0 48 48"><rect x="5" y="26" width="9" height="17" rx="2" fill="currentColor"/><rect x="19" y="15" width="10" height="28" rx="2" fill="currentColor"/><rect x="34" y="5" width="9" height="38" rx="2" fill="currentColor"/></symbol>
-          <symbol id="hud-shop" viewBox="0 0 48 48"><path d="M6 18h36l-4-11H10z" fill="currentColor"/><path d="M9 18v25h30V18M5 18c0 5 7 6 9 1 2 5 9 5 10 0 2 5 9 5 10 0 2 5 9 4 9-1" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M17 30h14v13H17z" fill="currentColor"/></symbol>
-          <symbol id="hud-gear" viewBox="0 0 48 48"><path d="M20 4h8l2 6 5 2 6-2 4 7-4 5v5l4 5-4 7-6-2-5 2-2 6h-8l-2-6-5-2-6 2-4-7 4-5v-5l-4-5 4-7 6 2 5-2z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="24" r="7" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
-          <symbol id="hud-map" viewBox="0 0 48 48"><path d="m4 10 13-5 14 5 13-5v33l-13 5-14-5-13 5zM17 5v33M31 10v33" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="m20 15 8 8m-8 0 8-8" stroke="currentColor" stroke-width="2"/></symbol>
-          <symbol id="hud-trophy" viewBox="0 0 48 48"><path d="M14 6h20v11c0 9-4 14-10 14s-10-5-10-14zM14 11H6v5c0 7 4 10 10 10M34 11h8v5c0 7-4 10-10 10M24 31v9M15 43h18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12h8v10l-4 4-4-4z" fill="currentColor"/></symbol>
-          <symbol id="hud-mail" viewBox="0 0 48 48"><rect x="4" y="9" width="40" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="m6 12 18 15 18-15" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></symbol>
-          <symbol id="hud-dragonballs" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="currentColor"/><path d="m24 10 3.5 8h8.5l-6.8 5 2.6 8-7.8-4.8-7.8 4.8 2.6-8-6.8-5h8.5z" fill="#ffb522"/></symbol>
-          <symbol id="hud-radar" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="24" r="12" fill="none" stroke="currentColor" stroke-width="2"/><path d="M24 24 37 10M24 4v40M4 24h40" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="24" r="3" fill="currentColor"/></symbol>
-          <symbol id="hud-cloud" viewBox="0 0 48 48"><path d="M12 38a9 9 0 0 1-1-18 14 14 0 0 1 27 4 7 7 0 0 1-1 14z" fill="currentColor"/><path d="m18 30 6 6 7-8" fill="none" stroke="#fff" stroke-width="2"/></symbol>
-          <symbol id="hud-ssj" viewBox="0 0 48 48"><path d="m8 26 4-9-1-9 9 6 4-12 6 12 10-6-2 12 7 6-9 4-3 14H16l-2-14z" fill="currentColor"/><path d="m17 28 5 2m9 0 5-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></symbol>
-          <symbol id="hud-menu" viewBox="0 0 48 48"><path d="M6 12h36M6 24h36M6 36h36" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></symbol>
-          <symbol id="hud-star" viewBox="0 0 48 48"><path d="m24 3 5.6 14.4L44 23l-14.4 5.6L24 43l-5.6-14.4L4 23l14.4-5.6z" fill="currentColor"/></symbol>
-          <symbol id="hud-alert" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="currentColor"/><path d="M24 11v17m0 8v1" stroke="#091522" stroke-width="5" stroke-linecap="round"/></symbol>
-          <symbol id="hud-coin" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="currentColor" stroke="#ffe88a" stroke-width="2"/><path d="m24 8 4.5 10h11l-8.8 6.4 3.4 10.5-10.1-6.5-10.1 6.5 3.4-10.5-8.8-6.4h11z" fill="#fff0a0"/></symbol>
-          <symbol id="hud-gem" viewBox="0 0 48 48"><path d="m24 3 17 10-3 23-14 9L10 36 7 13z" fill="currentColor"/><path d="m7 13 17 4 17-4M24 17v28M14 13l10-10 10 10" fill="none" stroke="#b5f5ff" stroke-width="2"/></symbol>
-          <symbol id="hud-orb" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="currentColor" stroke="#ffb1ba" stroke-width="2"/><ellipse cx="18" cy="15" rx="7" ry="4" fill="#fff" opacity=".65"/></symbol>
-          <symbol id="hud-send" viewBox="0 0 48 48"><path d="M4 23 44 4 31 44l-8-15zM23 29 44 4" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
-          <symbol id="hud-planet" viewBox="0 0 48 48"><circle cx="21" cy="21" r="13" fill="currentColor"/><ellipse cx="23" cy="25" rx="22" ry="7" fill="none" stroke="currentColor" stroke-width="3" transform="rotate(-20 23 25)"/></symbol>
-        </svg>
-        <div class="world-top">
-          <div class="hud-currencies" aria-label="Recursos">
-            <span class="currency zeni"><b><svg class="hud-icon currency-icon" aria-hidden="true"><use href="#hud-coin"/></svg></b><strong id="hudZeni">200</strong><em>+</em></span>
-            <span class="currency crystal"><b><svg class="hud-icon currency-icon" aria-hidden="true"><use href="#hud-gem"/></svg></b><strong id="hudCrystals">0</strong><em>+</em></span>
-            <span class="currency token"><b><svg class="hud-icon currency-icon" aria-hidden="true"><use href="#hud-orb"/></svg></b><strong id="hudTokens">0</strong><em>+</em></span>
-          </div>
-          <div class="player-hud"><img class="portrait" src="/assets/goku-avatar.png" alt="Avatar de Goku"><div class="hud-details"><div class="hud-title"><strong id="playerName">Goku</strong><span id="levelBadge">NV. 1</span></div><div class="resource health"><i id="hpBar"></i><span id="hpText">Vida</span></div><div class="resource energy"><i id="kiBar"></i><span id="kiText">Ki</span></div><div class="resource experience"><i id="hudXpBar"></i><span id="hudXpText">EXP · 0%</span></div></div></div>
-          <div class="region"><span id="regionType">REGIÃO PVE</span><strong id="regionName">Vila Namekiana</strong><small id="coordsText">X: 0&nbsp;&nbsp;Y: 0</small><small id="onlineText" class="visually-hidden">Servidor local</small></div>
-          <div class="map-wrap" aria-label="Minimapa e bússola"><span class="compass north">N</span><span class="compass east">E</span><span class="compass south">S</span><span class="compass west">W</span><canvas id="minimap" width="180" height="180" aria-label="Minimapa"></canvas></div>
-        </div>
-        <div class="hud-edge-tools" aria-label="Ferramentas rápidas">
-          <button type="button" id="hudPlanets" title="Planetas" aria-label="Planetas"><svg class="hud-icon" aria-hidden="true"><use href="#hud-planet"/></svg></button>
-          <button type="button" id="hudSettings" title="Ajuda e configurações" aria-label="Ajuda e configurações"><svg class="hud-icon" aria-hidden="true"><use href="#hud-gear"/></svg></button>
-          <button type="button" id="hudMapBook" title="Alternar zoom do mapa" aria-label="Mapa"><svg class="hud-icon" aria-hidden="true"><use href="#hud-map"/></svg></button>
-          <button type="button" id="hudTrophy" title="Ranking" aria-label="Ranking"><svg class="hud-icon" aria-hidden="true"><use href="#hud-trophy"/></svg></button>
-          <button type="button" id="hudMail" title="Chat" aria-label="Chat"><svg class="hud-icon" aria-hidden="true"><use href="#hud-mail"/></svg><i></i></button>
-        </div>
-        <nav class="hud-nav" aria-label="Menus do jogo">
-          <button type="button" data-open-panel="personagem"><svg class="hud-icon" aria-hidden="true"><use href="#hud-person"/></svg><span>Personagem</span></button>
-          <button type="button" data-open-panel="inventario"><svg class="hud-icon" aria-hidden="true"><use href="#hud-bag"/></svg><span>Inventário</span></button>
-          <button type="button" data-open-panel="missoes"><svg class="hud-icon" aria-hidden="true"><use href="#hud-scroll"/></svg><span>Missões</span></button>
-          <button type="button" data-open-panel="habilidades"><svg class="hud-icon" aria-hidden="true"><use href="#hud-flame"/></svg><span>Habilidades</span></button>
-          <button type="button" data-open-panel="amigos"><svg class="hud-icon" aria-hidden="true"><use href="#hud-group"/></svg><span>Amigos</span></button>
-          <button type="button" data-open-panel="ranking"><svg class="hud-icon" aria-hidden="true"><use href="#hud-chart"/></svg><span>Ranking</span></button>
-          <button type="button" id="hudShop"><svg class="hud-icon" aria-hidden="true"><use href="#hud-shop"/></svg><span>Loja</span></button>
-        </nav>
-        <section class="mission-card" aria-label="Missões rápidas">
-          <header><span><svg class="hud-icon mission-heading-icon" aria-hidden="true"><use href="#hud-alert"/></svg></span><button type="button" id="missionToggle">Ver Todas</button></header>
-          <div class="mission-row"><b><svg class="hud-icon mission-icon" aria-hidden="true"><use href="#hud-alert"/></svg></b><div><strong>[Principal]</strong> Derrote 10 Saibamans<small>Progresso: <span id="missionKills">0</span>/10 eliminações.</small></div></div>
-          <div class="mission-row secondary"><b><svg class="hud-icon mission-icon" aria-hidden="true"><use href="#hud-star"/></svg></b><div><strong>[Secundária]</strong> Colete materiais<small><span id="missionMaterials">0</span> materiais obtidos.</small></div></div>
-          <div class="mission-row secondary"><b><svg class="hud-icon mission-icon" aria-hidden="true"><use href="#hud-star"/></svg></b><div><strong>[Secundária]</strong> Evolua seu poder<small>Nível atual: <span id="missionLevel">1</span>.</small></div></div>
-        </section>
-        <section class="actionbar" aria-label="Barra de habilidades">
-          <button type="button" class="skill skill-kame" data-skill="kame" title="Kamehameha · tecla 1">
-            <kbd>1</kbd><span class="skill-art kame-art" aria-hidden="true"><i class="skill-sprite sprite-kame"></i><span class="skill-lock" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#hud-lock"/></svg></span></span><strong>Kamehameha</strong><small id="kameSkillText"><span class="skill-cost" aria-label="25 Ki"><b class="skill-cost-value">25</b><span class="skill-cost-unit">KI</span></span><span class="skill-cost-detail skill-cooldown">5s</span></small>
-          </button>
-          <button type="button" class="skill skill-kaioken" data-skill="kaioken" title="Kaioken · tecla 2">
-            <kbd>2</kbd><span class="skill-art kaioken-art" aria-hidden="true"><i class="skill-sprite sprite-kaioken"></i><span class="skill-lock" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#hud-lock"/></svg></span></span><strong>Kaioken</strong><small id="kaiokenSkillText"><span class="skill-cost" aria-label="12 Ki"><b class="skill-cost-value">12</b><span class="skill-cost-unit">KI</span></span><span class="skill-cost-detail skill-cooldown">12s</span></small>
-          </button>
-          <button type="button" class="skill skill-barrier" data-skill="barrier" title="Barreira de Ki · tecla 3">
-            <kbd>3</kbd><span class="skill-art barrier-art" aria-hidden="true"><i class="skill-sprite sprite-barrier"></i><span class="skill-lock" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#hud-lock"/></svg></span></span><strong>Barreira de Ki</strong><small id="barrierSkillText"><span class="skill-cost" aria-label="30 Ki"><b class="skill-cost-value">30</b><span class="skill-cost-unit">KI</span></span><span class="skill-cost-detail skill-cooldown">8s</span></small>
-          </button>
-          <button type="button" class="skill skill-transform transform" id="transformButton" title="Super Saiyajin · tecla 4">
-            <kbd>4</kbd><span class="skill-art transform-art" aria-hidden="true"><i class="skill-sprite sprite-transform"></i><span class="skill-lock" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#hud-lock"/></svg></span></span><strong>Super Saiyajin</strong><small id="transformText"><span class="skill-cost" aria-label="60 Ki"><b class="skill-cost-value">60</b><span class="skill-cost-unit">KI</span></span><span class="skill-cost-detail skill-cooldown">30s</span></small>
-          </button>
-          <button type="button" class="skill skill-genki" data-skill="genki" title="Genki Dama · tecla 5">
-            <kbd>5</kbd><span class="skill-art genki-art" aria-hidden="true"><i class="skill-sprite sprite-genki"></i><span class="skill-lock" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#hud-lock"/></svg></span></span><strong>Genki Dama</strong><small id="genkiSkillText"><span class="skill-cost" aria-label="60 Ki"><b class="skill-cost-value">60</b><span class="skill-cost-unit">KI</span></span><span class="skill-cost-detail skill-cooldown">45s</span></small>
-          </button>
-        </section>
-        <div class="hud-shortcuts" aria-label="Atalhos">
-          <button type="button" data-open-panel="inventario"><svg class="hud-icon" aria-hidden="true"><use href="#hud-dragonballs"/></svg><span>Esferas</span></button>
-          <button type="button" id="hudRadar"><b><svg class="hud-icon" aria-hidden="true"><use href="#hud-radar"/></svg></b><span>Radar</span></button>
-          <button type="button" id="hudMap"><b><svg class="hud-icon" aria-hidden="true"><use href="#hud-cloud"/></svg></b><span>Montaria</span></button>
-          <button type="button" id="hudTransform"><b><svg class="hud-icon" aria-hidden="true"><use href="#hud-ssj"/></svg></b><span>Transformar</span></button>
-          <button type="button" id="panelButtonBottom"><b><svg class="hud-icon" aria-hidden="true"><use href="#hud-menu"/></svg></b><span>Mais</span></button>
-        </div>
-        <div class="zoom-controls" aria-label="Zoom do mapa"><button id="zoomOut" title="Afastar" aria-label="Afastar mapa">−</button><span id="zoomLabel" title="Zoom atual">100%</span><button id="zoomIn" title="Aproximar" aria-label="Aproximar mapa">+</button></div>
-        <div id="targetHud" class="target-hud hidden"><span id="targetName"></span><div class="resource enemy"><i id="targetBar"></i></div></div>
-        <section class="hud-chat" aria-label="Chat do jogo">
-          <nav><button class="active" type="button">Geral</button><button type="button">Sistema</button><button type="button">Grupo</button><button type="button">Clã</button></nav>
-          <div class="chat-lines" aria-live="polite"></div>
-          <div class="chat-input"><input aria-label="Mensagem do chat" placeholder="Digite sua mensagem..."><button type="button" title="Enviar mensagem"><svg class="hud-icon" aria-hidden="true"><use href="#hud-send"/></svg></button></div>
-        </section>
-        <div class="world-bottom"><div id="foodBuff" class="buff">Comida inativa · F para comer</div><div class="hunt-controls"><div id="huntStatus" class="hunt-status">Exploração manual</div><button id="quickHunt" class="quick-hunt" title="Iniciar ou pausar a caça automática">▶ Caça · H</button></div></div>
-        <div id="joystick" aria-label="Direcional de toque"><div id="joystickKnob"></div></div>
-        <div id="respawn" class="respawn hidden"><b>Você foi derrotado</b><span id="respawnText">Retornando à vila...</span></div>
-        <div id="notifications" class="notifications" aria-live="polite"></div>
-      </div>
-      <div class="world-footer"><span><i class="key-icon">W A S D</i> mover · clique para mirar · roda do mouse para zoom</span><button id="saveButton">Salvar progresso</button></div>
-    </section>
-    <aside id="panel" class="panel">
-      <button type="button" class="panel-close" id="closePanelButton" aria-label="Fechar painel">×</button>
-      <div class="character-heading"><div><span class="eyebrow">SEU PERSONAGEM</span><h1>Son Goku <span id="formLabel">FORMA BASE</span></h1></div><span class="class-badge">SAIYAJIN</span></div>
-      <div class="xp-heading"><span id="xpLabel">Nível 1</span><span id="xpNumbers">0 / 30 XP</span></div><div class="xp-track"><i id="xpBar"></i></div>
-      <div id="nextUnlock" class="next-unlock">Próximo: Rajada de Ki e Imagem Residual · NV. 2</div>
-      <div class="stats" id="stats"></div>
-      <div class="section-title"><h2>Caça automática</h2><span>H</span></div>
-      <label class="select-label" for="huntZone">Região de caça</label><select id="huntZone"><option value="campos">Planícies de Namekusei · início</option><option value="cratera">Campo de Batalha · difícil</option></select>
-      <button id="huntButton" class="primary">Iniciar caça automática <span>↗</span></button>
-      <div class="toggle-grid"><label><input id="autoAttack" type="checkbox"> Ataque básico</label><label><input id="autoSkills" type="checkbox"> Técnicas</label><label><input id="autoFood" type="checkbox" checked> Renovar comida</label><label><input id="autoKi" type="checkbox"> Usar poção de Ki</label></div>
-      <p class="hint">Mover manualmente interrompe a caça. O servidor continua caçando enquanto esta sessão estiver conectada.</p>
-      <div class="section-title"><h2>Suprimentos</h2><span id="bagLabel">MOCHILA</span></div>
-      <div class="consumables"><button id="foodButton"><span class="item-icon">🍖</span><span><strong>Presunto <b id="foodCount">5</b></strong><small>Regenera por 5 min · F</small></span></button><button id="kiPotionButton"><span class="item-icon potion">◈</span><span><strong>Poção de Ki <b id="kiCount">4</b></strong><small id="kiPotionText">Recupera 45% · Q</small></span></button></div>
-      <div class="seed-row"><label for="seedSelect">Semente dos Deuses</label><select id="seedSelect"><option value="15">15%</option><option value="30">30%</option><option value="50">50%</option><option value="100">100%</option></select><button id="seedButton">Usar · R</button></div>
-      <div id="seedStatus" class="seed-status">Todas as potências compartilham uma recarga.</div>
-      <label class="auto-seed"><input id="autoSeed" type="checkbox"> Autorizar semente selecionada se vida &lt; 30%</label>
-      <div class="inventory-line"><span id="materials">0 sucatas · 0 cristais</span><strong id="zeni">200 Z</strong></div>
-      <div class="travel"><button data-travel="vila">↖ Vila / mercado</button><button data-travel="arena">Nave do Freeza · PvP ↗</button></div>
-      <button id="shopButton" class="shop-button">Abrir mercado <span>⊕</span></button>
-      <div class="prototype-note">VALORES DE TESTE · GOKU É O PRIMEIRO PERSONAGEM DISPONÍVEL</div>
-    </aside>
+  <!-- HUD em troca (ramo hud-nova): a HUD antiga saiu; a nova entra aqui, peça por peça, ligada por client/hud.mjs.
+       Fica só o essencial para jogar: o mapa, uma barra provisória, avisos, tela de derrota, joystick e as janelas. -->
+  <main class="jogo">
+    <canvas id="world" aria-label="Mapa do jogo. Use WASD ou as setas para movimentar." tabindex="0"></canvas>
+    <nav class="hud-provisoria" aria-label="Controles provisórios">
+      <span class="hud-provisoria-aviso">HUD em construção</span>
+      <button type="button" id="abrirMundos">Mundos</button>
+      <button type="button" id="abrirLoja">Loja</button>
+      <button type="button" id="quickHunt">▶ Caça · H</button>
+    </nav>
+    <div id="joystick" aria-label="Direcional de toque"><div id="joystickKnob"></div></div>
+    <div id="respawn" class="respawn hidden"><b>Você foi derrotado</b><span id="respawnText">Retornando à vila...</span></div>
+    <div id="notifications" class="notifications" aria-live="polite"></div>
   </main>
   <dialog id="welcomeDialog"><form id="joinForm"><span class="eyebrow">PRIMEIRA EXPEDIÇÃO</span><h2>Seu caminho começa aqui.</h2><p>Explore os campos, evolua o Goku e teste sua configuração de caça. Outros jogadores conectados a este servidor aparecem no mesmo mapa.</p><label for="nickname">Nome do jogador</label><input id="nickname" maxlength="18" value="Guerreiro" autocomplete="nickname" required><button class="primary" type="submit">Entrar no mundo <span>→</span></button><small>Progresso salvo automaticamente no servidor local.</small></form></dialog>
-  <dialog id="helpDialog"><button class="close-dialog" data-close="helpDialog" aria-label="Fechar">×</button><span class="eyebrow">MANUAL DO GUERREIRO</span><h2>Explore. Evolua. Supere.</h2><div class="help-grid"><p><b>WASD / setas</b>Movimentar. Também é possível clicar no chão ou usar o direcional de toque.</p><p><b>1 a 5</b>Kamehameha, Kaioken, Barreira de Ki, Super Saiyajin e Genki Dama. Espaço faz ataque básico; Shift esquiva.</p><p><b>F / Q / R / T / H</b>Comida, poção de Ki, semente, transformação e caça automática.</p><p><b>H</b>Ativa ou pausa a caça na região selecionada. Os toggles controlam o combate automático.</p><p><b>Roda do mouse / + e −</b>Aproximar ou afastar a visão do mapa.</p></div><p>Comida concede regeneração por cinco minutos. Sementes curam imediatamente e todas compartilham 20 segundos de recarga neste teste.</p><p>Atributos aumentam sozinhos. Nível 2 libera Kaioken e Barreira de Ki; nível 3 libera Kamehameha; nível 5 libera Super Saiyajin; nível 10 libera Genki Dama.</p><p>A região vermelha do minimapa permite PvP entre jogadores reais. Nas demais regiões, ataques entre jogadores são bloqueados pelo servidor.</p><p class="hint">Este protótipo usa valores provisórios: regeneração por comida inclusive em combate, Ki recuperado lentamente em repouso, retorno à vila sem perda de XP e loot exclusivo por 15s. Abra outra aba para testar um segundo jogador. Nenhum bot é contado como jogador.</p></dialog>
   <dialog id="shopDialog"><button class="close-dialog" data-close="shopDialog" aria-label="Fechar">×</button><span class="eyebrow">VILA DO LAGO</span><h2>Mercado de suprimentos</h2><p id="shopNotice" aria-live="polite">Chegue perto do mercador para comprar e vender.</p><div id="shopItems" class="shop-items"></div><button id="sellButton" class="primary">Vender sucatas e cristais</button><small>Todos os preços são provisórios para o protótipo.</small></dialog>
   <dialog id="planetsDialog" class="worlds-dialog"><div class="worlds-card"><div class="worlds-head"><span class="worlds-title">ESCOLHA O MUNDO</span><button type="button" class="worlds-x" data-close="planetsDialog" aria-label="Fechar">×</button></div><div class="worlds-grid"><button type="button" class="world-card" data-planet="cidades"><span class="world-orb" style="background-image:url(/assets/worlds/terra.webp)"></span><strong>Cidades</strong><small class="world-status">Entrar</small></button><button type="button" class="world-card" data-planet="namek"><span class="world-orb" style="background-image:url(/assets/worlds/namek.webp)"></span><strong>Planeta Namek</strong><small class="world-status">Viajar</small></button><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/androides.webp)"></span><strong>Ilha dos Androides</strong><small>Abre no Nível 147</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/torneio-mundial.webp)"></span><strong>Torneio Mundial</strong><small>Abre no Nível 201</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/kaioshin.webp)"></span><strong>Planeta Sagrado Kaioshin</strong><small>Abre no Nível 247</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/torneio.webp)"></span><strong>Torneio dos Universos</strong><small>Abre no Nível 301</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/deuses.webp)"></span><strong>Reino dos Deuses</strong><small>Abre no Nível 334</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/futuro.webp)"></span><strong>Linha do Tempo Alterada</strong><small>Abre no Nível 387</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/lendas.webp)"></span><strong>Torneio do Poder</strong><small>Abre no Nível 427</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/lendas.webp)"></span><strong>Lendas</strong><small>Abre no Nível 481</small></div></div></div></dialog>
   <dialog id="huntDialog" class="hunt-dialog"><div class="hunt-card"><div class="hunt-head"><button type="button" class="hunt-back" id="huntBack" aria-label="Voltar">&lsaquo;</button><span class="hunt-title" id="huntTitle">Terra</span><span class="hunt-sub" id="huntSub">Nível de Conta</span><button type="button" class="hunt-x" data-close="huntDialog" aria-label="Fechar">&times;</button></div><div class="hunt-map" id="huntMap"><div class="hunt-pins" id="huntPins"></div></div><div class="hunt-foot" id="huntFoot">Escolha uma caçada no mapa</div></div></dialog>
   <script>
-    // HUD shortcut wiring: reuses the existing game's actual controls.
-    document.querySelectorAll('[data-open-panel]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const panelButton = document.getElementById('panelButton');
-        if (panelButton) panelButton.click();
-        const panel = document.getElementById('panel');
-        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-    document.getElementById('panelButtonBottom')?.addEventListener('click', () => document.getElementById('panelButton')?.click());
-    document.getElementById('hudShop')?.addEventListener('click', () => document.getElementById('shopButton')?.click());
-    document.getElementById('hudSettings')?.addEventListener('click', () => document.getElementById('helpButton')?.click());
-    document.getElementById('hudPlanets')?.addEventListener('click', () => document.getElementById('planetsDialog')?.showModal());
-    document.getElementById('hudMapBook')?.addEventListener('click', () => document.getElementById('zoomOut')?.click());
-    document.getElementById('hudTrophy')?.addEventListener('click', () => document.querySelector('[data-open-panel="ranking"]')?.click());
-    document.getElementById('hudMail')?.addEventListener('click', () => {
-      const chat = document.querySelector('.hud-chat');
-      if (window.matchMedia('(max-width: 1000px)').matches && chat) {
-        const opening = !chat.classList.contains('mobile-open');
-        chat.classList.toggle('mobile-open', opening);
-        if (opening) document.querySelector('.chat-input input')?.focus();
-      } else {
-        document.querySelector('.chat-input input')?.focus();
-      }
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') document.querySelector('.hud-chat.mobile-open')?.classList.remove('mobile-open');
-    });
-    document.getElementById('closePanelButton')?.addEventListener('click', () => document.getElementById('panel')?.classList.remove('open'));
-    document.getElementById('hudTransform')?.addEventListener('click', () => document.getElementById('transformButton')?.click());
-    document.getElementById('hudRadar')?.addEventListener('click', () => document.getElementById('minimap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
-    document.getElementById('hudMap')?.addEventListener('click', () => document.getElementById('zoomIn')?.click());
-    document.getElementById('missionToggle')?.addEventListener('click', (event) => {
-      const card = event.currentTarget.closest('.mission-card');
-      card?.classList.toggle('missions-compact');
-      event.currentTarget.textContent = card?.classList.contains('missions-compact') ? 'Expandir' : 'Ver Todas';
-    });
-    const chatChannels = { geral: [], sistema: [], grupo: [], clans: [] };
-    let activeChatChannel = 'geral';
-    const renderChatChannel = () => {
-      const lines = document.querySelector('.chat-lines');
-      if (lines) lines.replaceChildren(...chatChannels[activeChatChannel]);
-    };
-    document.querySelectorAll('.hud-chat nav button').forEach((button, index) => {
-      button.dataset.chatChannel = ['geral', 'sistema', 'grupo', 'clans'][index];
-      button.addEventListener('click', () => {
-        activeChatChannel = button.dataset.chatChannel;
-        button.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === button));
-        renderChatChannel();
-      });
-    });
-    document.querySelector('.chat-input button')?.addEventListener('click', () => {
-      const input = document.querySelector('.chat-input input');
-      if (input?.value.trim()) {
-        const line = document.createElement('p');
-        line.textContent = '[' + (activeChatChannel === 'clans' ? 'Clã' : activeChatChannel[0].toUpperCase() + activeChatChannel.slice(1)) + '] Você: ' + input.value.trim();
-        chatChannels[activeChatChannel].push(line);
-        renderChatChannel();
-        input.value = '';
-      }
-    });
-    document.querySelector('.chat-input input')?.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') document.querySelector('.chat-input button')?.click();
-    });
-    const syncHudCurrency = () => {
-      const zeni = document.getElementById('zeni')?.textContent || '200 Z';
-      const target = document.getElementById('hudZeni');
-      if (target) { const value = zeni.replace(/[^0-9]/g, '') || '0'; if (target.textContent !== value) target.textContent = value; }
-      const materials = document.getElementById('materials')?.textContent || '';
-      const crystal = materials.match(/(\d+) cristais/);
-      const crystalTarget = document.getElementById('hudCrystals');
-      if (crystalTarget && crystal && crystalTarget.textContent !== crystal[1]) crystalTarget.textContent = crystal[1];
-    };
-    const currencyObserver = new MutationObserver(syncHudCurrency);
-    for (const el of ['zeni', 'materials'].map((id) => document.getElementById(id))) { if (el) currencyObserver.observe(el, { childList: true, characterData: true, subtree: true }); }
-    syncHudCurrency();
+    // Barra provisória: abre as janelas que continuam existindo. Sai quando a HUD nova chegar.
+    document.getElementById('abrirMundos').addEventListener('click', () => document.getElementById('planetsDialog').showModal());
+    document.getElementById('abrirLoja').addEventListener('click', () => document.getElementById('shopDialog').showModal());
   </script>
   <script type="module" src="/client/game.mjs"></script>
 </body>

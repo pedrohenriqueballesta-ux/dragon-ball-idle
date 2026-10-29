@@ -214,13 +214,20 @@ function renderHuntPins(planet) {
   }));
 }
 
+// Liga ou pausa a caça automática (botão de caça e tecla H). A região vem da lista da página,
+// se existir; senão, da última que o servidor registrou para o jogador.
+const regiaoDeCaca = () => document.getElementById('huntZone')?.value || ctx?.snapshot()?.self?.huntZone || 'campos';
+export function alternarCaca() {
+  action({ type: 'hunt', zone: regiaoDeCaca(), enabled: !ctx?.snapshot()?.self?.autoHunt });
+}
+
 // Liga os botões e janelas da HUD ao jogo. Chamado uma vez por game.mjs.
 export function ligarHud(contexto) {
   ctx = contexto;
   for (const button of document.querySelectorAll('[data-skill]')) button.addEventListener('click', () => action({ type: 'skill', skill: button.dataset.skill }));
   for (const key of ['autoAttack', 'autoSkills', 'autoFood', 'autoKi', 'autoSeed']) $(key).addEventListener('change', () => action({ type: 'toggle', key, value: $(key).checked }));
-  $('huntButton').addEventListener('click', () => action({ type: 'hunt', zone: $('huntZone').value, enabled: !ctx.snapshot()?.self?.autoHunt }));
-  $('huntZone').addEventListener('change', () => action({ type: 'hunt', zone: $('huntZone').value, enabled: Boolean(ctx.snapshot()?.self?.autoHunt) }));
+  $('huntButton').addEventListener('click', alternarCaca);
+  $('huntZone').addEventListener('change', () => action({ type: 'hunt', zone: regiaoDeCaca(), enabled: Boolean(ctx.snapshot()?.self?.autoHunt) }));
   $('foodButton').onclick = () => action({ type: 'food' });
   $('kiPotionButton').onclick = () => action({ type: 'potion' });
   $('seedButton').onclick = () => action({ type: 'seed', potency: Number($('seedSelect').value) });
@@ -228,7 +235,7 @@ export function ligarHud(contexto) {
   $('transformButton').onclick = () => action({ type: 'transform' });
   $('helpButton').onclick = () => { ctx.soltarTeclas(); $('helpDialog').showModal(); };
   $('panelButton').onclick = () => { const open = $('panel').classList.toggle('open'); $('panelButton').setAttribute('aria-expanded', String(open)); };
-  $('quickHunt').onclick = () => $('huntButton').click();
+  $('quickHunt').onclick = alternarCaca;
   $('shopButton').onclick = () => $('shopDialog').showModal();
   for (const btn of document.querySelectorAll('[data-close]')) btn.onclick = () => $(btn.dataset.close).close();
   for (const btn of document.querySelectorAll('[data-travel]')) btn.onclick = () => action({ type: 'travel', zone: btn.dataset.travel });

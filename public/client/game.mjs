@@ -2,7 +2,7 @@ import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, HOUSES, zoneAt } from '../
 import { deslocar } from '../shared/passagem.mjs';
 import { frenteDaCasa } from '../shared/config.mjs';
 import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawHouse, drawHouseGround, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
-import { $, notify, atualizarHud, ligarHud } from './hud.mjs';
+import { $, notify, atualizarHud, ligarHud, alternarCaca } from './hud.mjs';
 import { CAMERA, clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
 // O mapa e o minimapa são do jogo, não da HUD: o mapa é obrigatório; o minimapa, se existir.
@@ -74,7 +74,7 @@ document.addEventListener('keydown', e => {
   else if (key === 'f') action({ type: 'food' });
   else if (key === 'q') action({ type: 'potion' });
   else if (key === 'r') action({ type: 'seed' });
-  else if (key === 'h') $('huntButton').click();
+  else if (key === 'h') alternarCaca();
 });
 document.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); sendInput(); });
 window.addEventListener('blur', () => { keys.clear(); touchVector = { x: 0, y: 0 }; sendInput(); });
