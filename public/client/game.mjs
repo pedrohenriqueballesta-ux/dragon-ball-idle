@@ -147,6 +147,7 @@ function updateUI() {
   renderSkillMeta(document.getElementById('transformText'), CONFIG.skillCosts.transform, transformLocked ? CONFIG.skillCooldowns.transform + 's' : s.transformed ? 'ATIVO · 3,5 Ki/s' : s.transformRemaining > 0 ? Math.ceil(s.transformRemaining) + 's' : CONFIG.skillCooldowns.transform + 's');
   $('respawn').classList.toggle('hidden', s.hp > 0);
   $('respawnText').textContent = 'Retornando à vila em ' + Math.ceil(s.respawnRemaining) + 's';
+  if (document.getElementById('planetsDialog')?.open) markCurrentWorld();
 }
 
 function inputVector() {
@@ -216,7 +217,98 @@ $('quickHunt').onclick = () => $('huntButton').click();
 $('shopButton').onclick = () => $('shopDialog').showModal();
 for (const btn of document.querySelectorAll('[data-close]')) btn.onclick = () => $(btn.dataset.close).close();
 for (const btn of document.querySelectorAll('[data-travel]')) btn.onclick = () => action({ type: 'travel', zone: btn.dataset.travel });
-for (const btn of document.querySelectorAll('[data-planet]')) btn.onclick = () => { action({ type: 'travelPlanet', planet: btn.dataset.planet }); $('planetsDialog')?.close(); };
+function markCurrentWorld() {
+  const here = snapshot?.planet;
+  for (const card of document.querySelectorAll('#planetsDialog .world-card[data-planet]')) {
+    const isHere = card.dataset.planet === here;
+    card.classList.toggle('current', isHere);
+    const st = card.querySelector('.world-status');
+    if (st) st.textContent = isHere ? 'Você está aqui' : 'Viajar';
+  }
+}
+const HUNT_STAGES = {
+  namek: { name: 'Namekusei', bg: 'namek', stages: [
+    { name: 'Saibaman', x: 18.5, y: 22.3, lv: [1, 6], sprite: 'saibaman' },
+    { name: 'Mestre Kame', x: 39.3, y: 20.7, lv: [7, 13], sprite: 'mestre-kame' },
+    { name: 'Princesa Serpente', x: 60.7, y: 59, lv: [14, 20], sprite: 'princesa-snake' },
+    { name: 'Toma', x: 87.8, y: 73, lv: [21, 26], sprite: 'toma' },
+    { name: 'Fasha', x: 41.9, y: 59.8, lv: [27, 33], sprite: 'fasha' },
+    { name: 'Bardock', x: 38.8, y: 40.2, lv: [34, 40], sprite: 'bardock-fases-bardock' },
+    { name: 'Raditz', x: 58.6, y: 21.5, lv: [41, 46], sprite: 'raditz-fases-raditz' },
+    { name: 'Nappa (Armadura)', x: 81.5, y: 40.2, lv: [47, 53], sprite: 'nappa-armadura' },
+    { name: 'Turles', x: 60.7, y: 40.2, lv: [54, 60], sprite: 'turles' },
+    { name: 'Chaos', x: 17.4, y: 39.5, lv: [61, 66], sprite: 'chaos' },
+    { name: 'Lord Slug', x: 80.5, y: 20.7, lv: [67, 73], sprite: 'lord-slug' },
+    { name: 'Garlic Jr.', x: 82, y: 58.8, lv: [74, 80], sprite: 'garlic-jr' },
+    { name: 'Vovo Gohan', x: 18, y: 58.8, lv: [81, 86], sprite: 'vogohan' }
+  ] }
+};
+// Cidades da Terra: entrada livre, sem nível mínimo. Todas levam ao spawn seguro (Terra).
+const CITIES = {
+  cidades: { name: 'Cidades', bg: 'terra', list: [
+    { name: 'Cidade do Oeste', x: 22, y: 28 },
+    { name: 'Cidade do Norte', x: 50, y: 17 },
+    { name: 'Cidade do Leste', x: 78, y: 29 },
+    { name: 'Cidade Central', x: 49, y: 49 },
+    { name: 'Vila Pinguim', x: 24, y: 70 },
+    { name: 'Cidade Satã', x: 76, y: 68 },
+    { name: 'Cidade do Sul', x: 50, y: 82 }
+  ] }
+};
+function selectPlanet(planet) {
+  document.getElementById('planetsDialog')?.close();
+  if (CITIES[planet]) openCities(planet);
+  else if (HUNT_STAGES[planet]) openHunt(planet);
+  else action({ type: 'travelPlanet', planet });
+}
+function openHunt(planet) {
+  const data = HUNT_STAGES[planet]; if (!data) return;
+  $('huntTitle').textContent = data.name;
+  $('huntSub').textContent = 'Nível de Conta';
+  $('huntFoot').textContent = 'Escolha uma caçada no mapa';
+  $('huntMap').style.backgroundImage = 'url(/assets/worlds/' + data.bg + '.webp)';
+  renderHuntPins(planet);
+  $('huntDialog').showModal();
+}
+function openCities(key) {
+  const data = CITIES[key]; if (!data) return;
+  $('huntTitle').textContent = data.name;
+  $('huntSub').textContent = 'Terra · entrada livre';
+  $('huntFoot').textContent = 'Escolha uma cidade';
+  $('huntMap').style.backgroundImage = 'url(/assets/worlds/' + data.bg + '.webp)';
+  renderCityPins(key);
+  $('huntDialog').showModal();
+}
+function renderCityPins(key) {
+  const data = CITIES[key], layer = $('huntPins'); if (!data || !layer) return;
+  layer.replaceChildren(...data.list.map(c => {
+    const pin = document.createElement('button');
+    pin.className = 'hunt-pin city';
+    pin.style.left = c.x + '%'; pin.style.top = c.y + '%';
+    pin.onclick = () => { $('huntDialog').close(); action({ type: 'travelPlanet', planet: 'terra' }); notify('Viajando para ' + c.name); };
+    const orb = document.createElement('span'); orb.className = 'hunt-orb'; orb.textContent = '\u{1F3D9}\u{FE0F}';
+    const nm = document.createElement('strong'); nm.textContent = c.name;
+    pin.append(orb, nm); return pin;
+  }));
+}
+function renderHuntPins(planet) {
+  const data = HUNT_STAGES[planet], layer = $('huntPins'); if (!data || !layer) return;
+  const lvl = snapshot?.self?.level || 1;
+  layer.replaceChildren(...data.stages.map(st => {
+    const locked = lvl < st.lv[0];
+    const pin = document.createElement(locked ? 'div' : 'button');
+    pin.className = 'hunt-pin' + (locked ? ' locked' : '');
+    pin.style.left = st.x + '%'; pin.style.top = st.y + '%';
+    if (!locked) pin.onclick = () => { $('huntDialog').close(); action({ type: 'travelPlanet', planet: 'namek' }); notify('Cacada: ' + st.name); };
+    const orb = document.createElement('span'); orb.className = 'hunt-orb';
+    orb.style.backgroundImage = 'url(/assets/worlds/pins/' + st.sprite + '.webp)';
+    const nm = document.createElement('strong'); nm.textContent = st.name;
+    const lv = document.createElement('small'); lv.textContent = 'Nv ' + st.lv[0] + '-' + st.lv[1];
+    pin.append(orb, nm, lv); return pin;
+  }));
+}
+for (const btn of document.querySelectorAll('[data-planet]')) btn.onclick = () => selectPlanet(btn.dataset.planet);
+$('huntBack').onclick = () => { $('huntDialog').close(); $('planetsDialog').showModal(); };
 $('saveButton').onclick = async () => { try { await api('save'); notify('Progresso salvo no servidor.'); } catch (e) { notify(e.message); } };
 for (const [key, price] of Object.entries(CONFIG.prices)) {
   const row = document.createElement('div'); row.className = 'shop-item';
