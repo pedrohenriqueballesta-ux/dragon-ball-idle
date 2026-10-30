@@ -9,7 +9,7 @@ button{cursor:pointer}
 
 /* O mapa ocupa a tela inteira; o jogo mede o tamanho dele a cada redimensionamento. */
 .jogo{position:fixed;inset:0}
-#world{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none}
+#world{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none;touch-action:none;image-rendering:pixelated} /* pixelated: tela Retina amplia o mapa pixel a pixel, sem borrar */
 
 /* ===== HUD nova (modelo do Pedro, 29/10) =====
    Tudo é medido em --u (1px × escala --e, calculada em client/hud.mjs a partir do tamanho da janela).
