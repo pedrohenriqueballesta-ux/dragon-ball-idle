@@ -2,38 +2,15 @@ import { CONFIG, ZONES, OBSTACLES, MERCHANT, PLANETS, HOUSES, zoneAt } from '../
 import { deslocar } from '../shared/passagem.mjs';
 import { frenteDaCasa } from '../shared/config.mjs';
 import { art, CLEARINGS, drawTerrain, drawGroundImage, drawMarket, drawHouse, drawHouseGround, drawTree, drawRock, drawVendor, drawAlien, drawSaibaman, drawGoku, drawFreeza } from '../art/index.mjs';
+import { $, notify, atualizarHud, ligarHud, alternarCaca } from './hud.mjs';
 import { CAMERA, clampZoom, zoomFromWheel, cameraView, worldFromPointer, advancePose, mobStrikeProgress } from '../render/camera.mjs';
 
-const $ = id => document.getElementById(id);
-const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap'), mctx = mini.getContext('2d');
+// O mapa e o minimapa são do jogo, não da HUD: o mapa é obrigatório; o minimapa, se existir.
+const canvas = document.getElementById('world'), ctx = canvas.getContext('2d'), mini = document.getElementById('minimap'), mctx = mini?.getContext('2d');
 const keys = new Set(), renderPositions = new Map(), seenEvents = new Set();
 let snapshot = null, session = '', playerId = '', eventSource = null, receivedAt = 0, width = 900, height = 600, ratio = 1;
 let camera = { x: 0, y: 0, scale: 1 }, zoom = CAMERA.zoomPadrao, pointerAim = null, touchVector = { x: 0, y: 0 }, lastUI = 0, sendingInput = false;
 let floating = [], lastFrame = performance.now(), connectionError = false, miniTick = 0;
-const integer = v => Math.round(v).toLocaleString('pt-BR');
-const clock = seconds => { const n = Math.max(0, Math.ceil(seconds)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
-const itemNames = { food: 'Presunto', ki: 'Poção de Ki', seed15: 'Semente 15%', seed30: 'Semente 30%', seed50: 'Semente 50%', seed100: 'Semente 100%' };
-
-function renderSkillMeta(element, cost, detail) {
-  if (!element) return;
-  if (cost == null) { element.textContent = detail; return; }
-  const costBadge = document.createElement('span'); costBadge.className = 'skill-cost'; costBadge.setAttribute('aria-label', cost + ' Ki');
-  const costValue = document.createElement('b'); costValue.className = 'skill-cost-value'; costValue.textContent = cost;
-  const costUnit = document.createElement('span'); costUnit.className = 'skill-cost-unit'; costUnit.textContent = 'KI';
-  costBadge.replaceChildren(costValue, costUnit);
-  const detailLabel = document.createElement('span');
-  const isCooldown = /^(?:\d+(?:[.,]\d+)?s|\d+:\d{2})$/.test(detail);
-  detailLabel.className = isCooldown ? 'skill-cost-detail skill-cooldown' : 'skill-cost-detail';
-  detailLabel.textContent = detail;
-  element.replaceChildren(costBadge, detailLabel);
-}
-
-function notify(text) {
-  if ($('shopDialog').open) $('shopNotice').textContent = text;
-  const element = document.createElement('div'); element.className = 'toast'; element.textContent = text;
-  $('notifications').append(element); setTimeout(() => element.remove(), 4200);
-  while ($('notifications').children.length > 3) $('notifications').firstChild.remove();
-}
 async function api(path, data = {}) {
   const res = await fetch('/api/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error(res.status === 401 ? 'Sessão desconectada. Recarregue a página.' : 'Não foi possível executar a ação.');
@@ -66,89 +43,13 @@ async function join(name, previousToken) {
         else floating.push(effect);
       }
       if (seenEvents.size > 2000) { const items = [...seenEvents]; items.slice(0, 1000).forEach(id => seenEvents.delete(id)); }
-      if (performance.now() - lastUI > 90) { updateUI(); lastUI = performance.now(); }
+      if (performance.now() - lastUI > 90) { atualizarHud(snapshot, playerId); lastUI = performance.now(); }
     } catch (e) { console.error('Falha ao ler estado do jogo:', e.message); }
   };
   if ($('welcomeDialog').open) $('welcomeDialog').close();
   notify(data.resumed ? 'Seu personagem foi recuperado.' : 'Bem-vindo! Vá às Planícies de Namekusei ou ative a caça automática.');
 }
 
-function updateUI() {
-  const s = snapshot?.self, p = snapshot?.players.find(v => v.id === playerId); if (!s || !p) return;
-  $('playerName').textContent = p.name; $('levelBadge').textContent = 'Lv. ' + s.level;
-  $('hpBar').style.width = Math.max(0, 100 * s.hp / s.stats.hp) + '%';
-  $('kiBar').style.width = Math.max(0, 100 * s.ki / s.stats.ki) + '%';
-  $('hpText').textContent = integer(s.hp) + ' / ' + integer(s.stats.hp);
-  $('kiText').textContent = integer(s.ki) + ' / ' + integer(s.stats.ki);
-  const xpPct = Math.min(100, s.xp / Math.max(1, s.xpNext) * 100);
-  $('xpLabel').textContent = 'Nível ' + s.level; $('xpNumbers').textContent = integer(s.xp) + ' / ' + integer(s.xpNext) + ' XP';
-  $('xpBar').style.width = xpPct + '%';
-  $('hudXpBar').style.width = xpPct + '%'; $('hudXpText').textContent = 'EXP · ' + Math.round(xpPct) + '%';
-  $('formLabel').textContent = s.transformed ? 'SUPER SAIYAJIN' : 'FORMA BASE';
-  $('nextUnlock').textContent = s.level < 2 ? 'Próximo: Kaioken + Barreira de Ki · NV. 2' : s.level < 3 ? 'Próximo: Kamehameha · NV. 3' : s.level < 5 ? 'Próximo: Super Saiyajin · NV. 5' : s.level < 10 ? 'Próximo: Genki Dama · NV. 10' : 'Todas as técnicas principais desbloqueadas.';
-  const stats = [['Vida', integer(s.stats.hp)], ['Ki', integer(s.stats.ki)], ['Ataque', s.stats.attack.toFixed(1)], ['Defesa', s.stats.defense.toFixed(1)], ['Cura / comida', s.stats.healing.toFixed(2) + '×'], ['Mochila', s.stats.capacity.toFixed(1) + ' kg'], ['Chance loot', Math.round(s.stats.lootChance * 100) + '%'], ['Movimento', Math.round(s.stats.mobility)]];
-  $('stats').replaceChildren(...stats.map(pair => { const div = document.createElement('div'); div.className = 'stat'; const label = document.createElement('span'), value = document.createElement('b'); label.textContent = pair[0]; value.textContent = pair[1]; div.append(label, value); return div; }));
-  for (const key of ['autoAttack', 'autoSkills', 'autoFood', 'autoKi', 'autoSeed']) $(key).checked = s[key];
-  $('huntZone').value = s.huntZone; $('huntButton').classList.toggle('running', s.autoHunt);
-  $('huntButton').textContent = s.autoHunt ? 'Pausar caça automática  ■' : 'Iniciar caça automática  ↗';
-  $('foodCount').textContent = s.inventory.food; $('kiCount').textContent = s.inventory.ki;
-  $('zeni').textContent = integer(s.zeni) + ' Z'; $('materials').textContent = s.inventory.scrap + ' sucatas · ' + s.inventory.crystal + ' cristais';
-  $('bagLabel').textContent = s.weight.toFixed(1) + ' / ' + s.stats.capacity.toFixed(1) + ' KG';
-  $('seedSelect').value = String(s.seedSelected);
-  for (const option of $('seedSelect').options) option.textContent = option.value + '% · ' + (s.inventory['seed' + option.value] || 0);
-  $('seedButton').disabled = s.seedRemaining > 0 || !s.inventory['seed' + s.seedSelected];
-  $('seedButton').textContent = s.seedRemaining > 0 ? Math.ceil(s.seedRemaining) + 's' : 'Usar · R';
-  $('seedStatus').textContent = s.seedRemaining > 0 ? 'Todas as sementes em recarga · ' + Math.ceil(s.seedRemaining) + 's' : 'Cura instantânea · recarga compartilhada de 20s';
-  $('seedStatus').classList.toggle('waiting', s.seedRemaining > 0);
-  $('kiPotionText').textContent = s.kiRemaining > 0 ? 'Recarga: ' + Math.ceil(s.kiRemaining) + 's' : 'Recupera 45% · Q';
-  $('foodBuff').textContent = s.foodRemaining > 0 ? '🍖 ' + (CONFIG.foodHealPerSecond * s.stats.healing).toFixed(1) + ' vida/s · ' + clock(s.foodRemaining) : 'Comida inativa · F para comer';
-  $('foodBuff').classList.toggle('inactive', s.foodRemaining <= 0);
-  $('huntStatus').textContent = s.autoHunt ? 'CAÇA AUTOMÁTICA ATIVA' : 'Exploração manual';
-  $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H'; $('quickHunt').classList.toggle('running', s.autoHunt);
-  const z = zoneAt(p.x, p.y);
-  $('regionName').textContent = snapshot.planet !== 'namek' ? (PLANETS[snapshot.planet]?.name || 'Terra') : (z?.name || 'Trilhas de Namekusei');
-  $('regionType').textContent = snapshot.planet !== 'namek' ? 'PLANETA SEGURO' : (z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE');
-  document.querySelector('.region').classList.toggle('pvp', Boolean(z?.pvp));
-  $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');
-  $('coordsText').textContent = 'X: ' + Math.round(p.x) + '   Y: ' + Math.round(p.y);
-  $('missionKills').textContent = Math.min(10, s.kills || 0);
-  $('missionMaterials').textContent = (s.inventory.scrap || 0) + (s.inventory.crystal || 0);
-  $('missionLevel').textContent = s.level;
-  const target = snapshot.mobs.find(m => m.id === s.targetId) || snapshot.players.find(v => v.id === s.targetId);
-  $('targetHud').classList.toggle('hidden', !target || target.hp <= 0);
-  if (target) { $('targetName').textContent = target.name + ' · ' + integer(target.hp) + ' PV'; $('targetBar').style.width = 100 * target.hp / target.maxHp + '%'; }
-  const skillState = {
-    kame: { required: CONFIG.skills.kame, cost: CONFIG.skillCosts.kame, cooldown: CONFIG.skillCooldowns.kame, remaining: s.kameRemaining || 0, text: s.level < CONFIG.skills.kame ? CONFIG.skillCooldowns.kame + 's' : s.kameRemaining > 0 ? s.kameRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kame + 's' },
-    kaioken: { required: CONFIG.skills.kaioken, cost: CONFIG.skillCosts.kaioken, cooldown: CONFIG.skillCooldowns.kaioken, remaining: s.kaiokenRemaining || 0, text: s.level < CONFIG.skills.kaioken ? CONFIG.skillCooldowns.kaioken + 's' : s.kaiokenActive ? 'ATIVO' : s.kaiokenRemaining > 0 ? s.kaiokenRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kaioken + 's', active: s.kaiokenActive },
-    barrier: { required: CONFIG.skills.barrier, cost: CONFIG.skillCosts.barrier, cooldown: CONFIG.skillCooldowns.barrier, remaining: s.barrierRemaining || 0, text: s.level < CONFIG.skills.barrier ? CONFIG.skillCooldowns.barrier + 's' : s.barrierActive ? 'PROTEGIDO' : s.barrierRemaining > 0 ? s.barrierRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.barrier + 's', active: s.barrierActive },
-    genki: { required: CONFIG.skills.genki, cost: CONFIG.skillCosts.genki, cooldown: CONFIG.skillCooldowns.genki, remaining: s.genkiRemaining || 0, text: s.level < CONFIG.skills.genki ? CONFIG.skillCooldowns.genki + 's' : s.genkiRemaining > 0 ? s.genkiRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.genki + 's' }
-  };
-  for (const button of document.querySelectorAll('[data-skill]')) {
-    const skill = button.dataset.skill, state = skillState[skill]; if (!state) continue;
-    const locked = s.level < state.required;
-    button.classList.toggle('locked', locked); button.disabled = locked || state.remaining > 0 || (skill === 'kaioken' && s.kaiokenActive) || (skill === 'barrier' && s.barrierActive);
-    button.classList.toggle('active', Boolean(state.active));
-    const label = button.querySelector('small');
-    renderSkillMeta(label, state.cost, state.text);
-    let cooldown = button.querySelector('.cooldown-overlay');
-    if (!cooldown) { cooldown = document.createElement('span'); cooldown.className = 'cooldown-overlay'; cooldown.setAttribute('aria-hidden', 'true'); button.append(cooldown); }
-    const remaining = state.remaining;
-    cooldown.textContent = remaining > 0 ? (remaining >= 10 ? Math.ceil(remaining) : remaining.toFixed(1)) + 's' : '';
-    button.classList.toggle('cooling', remaining > 0);
-    button.title = button.querySelector('strong').textContent + ' · ' + state.text + ' · tecla ' + button.querySelector('kbd').textContent;
-  }
-  const transformLocked = s.level < CONFIG.skills.transform;
-  $('transformButton').disabled = transformLocked || (!s.transformed && (s.transformRemaining || 0) > 0);
-  $('transformButton').classList.toggle('locked', transformLocked); $('transformButton').classList.toggle('active', s.transformed);
-  $('transformButton').classList.toggle('cooling', !s.transformed && s.transformRemaining > 0);
-  let transformCooldown = $('transformButton').querySelector('.cooldown-overlay');
-  if (!transformCooldown) { transformCooldown = document.createElement('span'); transformCooldown.className = 'cooldown-overlay'; transformCooldown.setAttribute('aria-hidden', 'true'); $('transformButton').append(transformCooldown); }
-  transformCooldown.textContent = !s.transformed && s.transformRemaining > 0 ? s.transformRemaining.toFixed(1) + 's' : '';
-  renderSkillMeta(document.getElementById('transformText'), CONFIG.skillCosts.transform, transformLocked ? CONFIG.skillCooldowns.transform + 's' : s.transformed ? 'ATIVO · 3,5 Ki/s' : s.transformRemaining > 0 ? Math.ceil(s.transformRemaining) + 's' : CONFIG.skillCooldowns.transform + 's');
-  $('respawn').classList.toggle('hidden', s.hp > 0);
-  $('respawnText').textContent = 'Retornando à vila em ' + Math.ceil(s.respawnRemaining) + 's';
-  if (document.getElementById('planetsDialog')?.open) markCurrentWorld();
-}
 
 function inputVector() {
   let x = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0) + touchVector.x;
@@ -168,12 +69,13 @@ document.addEventListener('keydown', e => {
   if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) e.preventDefault();
   keys.add(key); sendInput(); if (e.repeat) return;
   const skills = { '1': 'kame', '2': 'kaioken', '3': 'barrier', '5': 'genki', ' ': 'basic', 'shift': 'dash' };
+  // 6 e 7: semente e poção de Ki, na barra de atalhos da HUD nova (R e Q continuam valendo).
   if (skills[key]) action({ type: 'skill', skill: skills[key] });
   else if (key === '4' || key === 't') action({ type: 'transform' });
   else if (key === 'f') action({ type: 'food' });
-  else if (key === 'q') action({ type: 'potion' });
-  else if (key === 'r') action({ type: 'seed' });
-  else if (key === 'h') $('huntButton').click();
+  else if (key === 'q' || key === '7') action({ type: 'potion' });
+  else if (key === 'r' || key === '6') action({ type: 'seed' });
+  else if (key === 'h') alternarCaca();
 });
 document.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); sendInput(); });
 window.addEventListener('blur', () => { keys.clear(); touchVector = { x: 0, y: 0 }; sendInput(); });
@@ -202,121 +104,7 @@ canvas.addEventListener('pointerdown', e => {
   const target = targets.find(t => Math.hypot(t.x - point.x, t.y - point.y) < (t.type === 'boss' ? 45 : 30));
   if (target) action({ type: 'target', id: target.id }); else action({ type: 'moveTo', x: point.x, y: point.y });
 });
-for (const button of document.querySelectorAll('[data-skill]')) button.addEventListener('click', () => action({ type: 'skill', skill: button.dataset.skill }));
-for (const key of ['autoAttack', 'autoSkills', 'autoFood', 'autoKi', 'autoSeed']) $(key).addEventListener('change', () => action({ type: 'toggle', key, value: $(key).checked }));
-$('huntButton').addEventListener('click', () => action({ type: 'hunt', zone: $('huntZone').value, enabled: !snapshot?.self?.autoHunt }));
-$('huntZone').addEventListener('change', () => action({ type: 'hunt', zone: $('huntZone').value, enabled: Boolean(snapshot?.self?.autoHunt) }));
-$('foodButton').onclick = () => action({ type: 'food' });
-$('kiPotionButton').onclick = () => action({ type: 'potion' });
-$('seedButton').onclick = () => action({ type: 'seed', potency: Number($('seedSelect').value) });
-$('seedSelect').onchange = () => action({ type: 'selectSeed', potency: Number($('seedSelect').value) });
-$('transformButton').onclick = () => action({ type: 'transform' });
-$('helpButton').onclick = () => { keys.clear(); sendInput(); $('helpDialog').showModal(); };
-$('panelButton').onclick = () => { const open = $('panel').classList.toggle('open'); $('panelButton').setAttribute('aria-expanded', String(open)); };
-$('quickHunt').onclick = () => $('huntButton').click();
-$('shopButton').onclick = () => $('shopDialog').showModal();
-for (const btn of document.querySelectorAll('[data-close]')) btn.onclick = () => $(btn.dataset.close).close();
-for (const btn of document.querySelectorAll('[data-travel]')) btn.onclick = () => action({ type: 'travel', zone: btn.dataset.travel });
-function markCurrentWorld() {
-  const here = snapshot?.planet;
-  for (const card of document.querySelectorAll('#planetsDialog .world-card[data-planet]')) {
-    const isHere = card.dataset.planet === here;
-    card.classList.toggle('current', isHere);
-    const st = card.querySelector('.world-status');
-    if (st) st.textContent = isHere ? 'Você está aqui' : 'Viajar';
-  }
-}
-const HUNT_STAGES = {
-  namek: { name: 'Namekusei', bg: 'namek', stages: [
-    { name: 'Saibaman', x: 18.5, y: 22.3, lv: [1, 6], sprite: 'saibaman' },
-    { name: 'Mestre Kame', x: 39.3, y: 20.7, lv: [7, 13], sprite: 'mestre-kame' },
-    { name: 'Princesa Serpente', x: 60.7, y: 59, lv: [14, 20], sprite: 'princesa-snake' },
-    { name: 'Toma', x: 87.8, y: 73, lv: [21, 26], sprite: 'toma' },
-    { name: 'Fasha', x: 41.9, y: 59.8, lv: [27, 33], sprite: 'fasha' },
-    { name: 'Bardock', x: 38.8, y: 40.2, lv: [34, 40], sprite: 'bardock-fases-bardock' },
-    { name: 'Raditz', x: 58.6, y: 21.5, lv: [41, 46], sprite: 'raditz-fases-raditz' },
-    { name: 'Nappa (Armadura)', x: 81.5, y: 40.2, lv: [47, 53], sprite: 'nappa-armadura' },
-    { name: 'Turles', x: 60.7, y: 40.2, lv: [54, 60], sprite: 'turles' },
-    { name: 'Chaos', x: 17.4, y: 39.5, lv: [61, 66], sprite: 'chaos' },
-    { name: 'Lord Slug', x: 80.5, y: 20.7, lv: [67, 73], sprite: 'lord-slug' },
-    { name: 'Garlic Jr.', x: 82, y: 58.8, lv: [74, 80], sprite: 'garlic-jr' },
-    { name: 'Vovo Gohan', x: 18, y: 58.8, lv: [81, 86], sprite: 'vogohan' }
-  ] }
-};
-// Cidades da Terra: entrada livre, sem nível mínimo. Todas levam ao spawn seguro (Terra).
-const CITIES = {
-  cidades: { name: 'Cidades', bg: 'terra', list: [
-    { name: 'Cidade do Oeste', x: 22, y: 28 },
-    { name: 'Cidade do Norte', x: 50, y: 17 },
-    { name: 'Cidade do Leste', x: 78, y: 29 },
-    { name: 'Cidade Central', x: 49, y: 49 },
-    { name: 'Vila Pinguim', x: 24, y: 70 },
-    { name: 'Cidade Satã', x: 76, y: 68 },
-    { name: 'Cidade do Sul', x: 50, y: 82 }
-  ] }
-};
-function selectPlanet(planet) {
-  document.getElementById('planetsDialog')?.close();
-  if (CITIES[planet]) openCities(planet);
-  else if (HUNT_STAGES[planet]) openHunt(planet);
-  else action({ type: 'travelPlanet', planet });
-}
-function openHunt(planet) {
-  const data = HUNT_STAGES[planet]; if (!data) return;
-  $('huntTitle').textContent = data.name;
-  $('huntSub').textContent = 'Nível de Conta';
-  $('huntFoot').textContent = 'Escolha uma caçada no mapa';
-  $('huntMap').style.backgroundImage = 'url(/assets/worlds/' + data.bg + '.webp)';
-  renderHuntPins(planet);
-  $('huntDialog').showModal();
-}
-function openCities(key) {
-  const data = CITIES[key]; if (!data) return;
-  $('huntTitle').textContent = data.name;
-  $('huntSub').textContent = 'Terra · entrada livre';
-  $('huntFoot').textContent = 'Escolha uma cidade';
-  $('huntMap').style.backgroundImage = 'url(/assets/worlds/' + data.bg + '.webp)';
-  renderCityPins(key);
-  $('huntDialog').showModal();
-}
-function renderCityPins(key) {
-  const data = CITIES[key], layer = $('huntPins'); if (!data || !layer) return;
-  layer.replaceChildren(...data.list.map(c => {
-    const pin = document.createElement('button');
-    pin.className = 'hunt-pin city';
-    pin.style.left = c.x + '%'; pin.style.top = c.y + '%';
-    pin.onclick = () => { $('huntDialog').close(); action({ type: 'travelPlanet', planet: 'terra' }); notify('Viajando para ' + c.name); };
-    const orb = document.createElement('span'); orb.className = 'hunt-orb'; orb.textContent = '\u{1F3D9}\u{FE0F}';
-    const nm = document.createElement('strong'); nm.textContent = c.name;
-    pin.append(orb, nm); return pin;
-  }));
-}
-function renderHuntPins(planet) {
-  const data = HUNT_STAGES[planet], layer = $('huntPins'); if (!data || !layer) return;
-  const lvl = snapshot?.self?.level || 1;
-  layer.replaceChildren(...data.stages.map(st => {
-    const locked = lvl < st.lv[0];
-    const pin = document.createElement(locked ? 'div' : 'button');
-    pin.className = 'hunt-pin' + (locked ? ' locked' : '');
-    pin.style.left = st.x + '%'; pin.style.top = st.y + '%';
-    if (!locked) pin.onclick = () => { $('huntDialog').close(); action({ type: 'travelPlanet', planet: 'namek' }); notify('Cacada: ' + st.name); };
-    const orb = document.createElement('span'); orb.className = 'hunt-orb';
-    orb.style.backgroundImage = 'url(/assets/worlds/pins/' + st.sprite + '.webp)';
-    const nm = document.createElement('strong'); nm.textContent = st.name;
-    const lv = document.createElement('small'); lv.textContent = 'Nv ' + st.lv[0] + '-' + st.lv[1];
-    pin.append(orb, nm, lv); return pin;
-  }));
-}
-for (const btn of document.querySelectorAll('[data-planet]')) btn.onclick = () => selectPlanet(btn.dataset.planet);
-$('huntBack').onclick = () => { $('huntDialog').close(); $('planetsDialog').showModal(); };
-$('saveButton').onclick = async () => { try { await api('save'); notify('Progresso salvo no servidor.'); } catch (e) { notify(e.message); } };
-for (const [key, price] of Object.entries(CONFIG.prices)) {
-  const row = document.createElement('div'); row.className = 'shop-item';
-  const label = document.createElement('span'); label.textContent = itemNames[key];
-  const btn = document.createElement('button'); btn.textContent = price + ' Z · comprar'; btn.onclick = () => action({ type: 'buy', item: key });
-  row.append(label, btn); $('shopItems').append(row);
-}
-$('sellButton').onclick = () => action({ type: 'sell' });
+ligarHud({ action, api, snapshot: () => snapshot, soltarTeclas: () => { keys.clear(); sendInput(); } });
 $('joinForm').onsubmit = async event => { event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true; try { await join($('nickname').value); } catch (e) { notify(e.message); } finally { button.disabled = false; } };
 
 let joystickPointer = null;
@@ -358,7 +146,14 @@ function screenPosition(entity, dt) {
   renderPositions.set(entity.id, p); return p;
 }
 function shadow(x, y, size = 16) { ctx.fillStyle = '#15291e66'; ctx.beginPath(); ctx.ellipse(x, y + 4, size, size * 0.35, 0, 0, Math.PI * 2); ctx.fill(); }
-function healthBar(x, y, hp, max, color, size = 40) { ctx.fillStyle = '#0c1b1c'; ctx.fillRect(x - size / 2 - 1, y - 1, size + 2, 6); ctx.fillStyle = color; ctx.fillRect(x - size / 2, y, Math.max(0, size * hp / max), 4); }
+// Placa de nome e vida sobre o personagem (modelo da HUD): texto forte com contorno e barra arredondada.
+function placa(x, y, texto, hp, max, cor, largura = 52) {
+  ctx.save(); ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 3; ctx.strokeStyle = '#000c'; ctx.strokeText(texto, x, y); ctx.fillStyle = '#fff'; ctx.fillText(texto, x, y);
+  ctx.fillStyle = '#060b18d9'; ctx.beginPath(); ctx.roundRect(x - largura / 2 - 2, y + 4, largura + 4, 9, 4); ctx.fill();
+  ctx.fillStyle = cor; ctx.beginPath(); ctx.roundRect(x - largura / 2, y + 6, Math.max(0, largura * hp / max), 5, 3); ctx.fill();
+  ctx.restore();
+}
 function drawPlayer(p, pos, time) {
   shadow(pos.x, pos.y, 20);
   const back = p.facing.y < -0.3;
@@ -375,8 +170,8 @@ function drawPlayer(p, pos, time) {
   if (!drawGoku(ctx, p, pos, time, strikeProgress)) ctx.drawImage(image, Math.round(pos.x - 21), Math.round(pos.y - 49 + bob), 42, 56);
   ctx.restore();
   if (p.charge) { ctx.fillStyle = '#bdefff'; ctx.beginPath(); ctx.arc(pos.x + p.facing.x * 26, pos.y - 16 + p.facing.y * 18, 7 + Math.sin(time * 22) * 2, 0, Math.PI * 2); ctx.fill(); }
-  if (p.id !== playerId) { healthBar(pos.x, pos.y - 61, p.hp, p.maxHp, '#72a6c4', 42); ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ecf3dd'; ctx.fillText(p.name, pos.x, pos.y - 67); }
-  else { ctx.fillStyle = '#f9d3a4'; ctx.beginPath(); ctx.moveTo(pos.x - 4, pos.y + 13); ctx.lineTo(pos.x + 4, pos.y + 13); ctx.lineTo(pos.x, pos.y + 18); ctx.fill(); }
+  placa(pos.x, pos.y - 86, p.name + ' • Nv. ' + p.level, p.hp, p.maxHp, p.id === playerId ? '#3ccf55' : '#5fb6ff');
+  if (p.id === playerId) { ctx.fillStyle = '#f9d3a4'; ctx.beginPath(); ctx.moveTo(pos.x - 4, pos.y + 13); ctx.lineTo(pos.x + 4, pos.y + 13); ctx.lineTo(pos.x, pos.y + 18); ctx.fill(); }
 }
 function drawMob(m, pos, time) {
   const boss = m.type === 'boss', size = boss ? 76 : 40, h = boss ? 100 : 53;
@@ -394,8 +189,7 @@ function drawMob(m, pos, time) {
       : drawAlien(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress, pos.travelled);
   if (!drawn) ctx.drawImage(boss ? art.freezaBoss : m.type === 'melee' ? sprites.melee : sprites.ranged, Math.round(pos.x - size / 2), Math.round(pos.y - h + 8 + (m.moving ? Math.sin(time * 14) : 0)), size, h);
   ctx.restore();
-  if (m.hp < m.maxHp || snapshot.self?.targetId === m.id || boss) healthBar(pos.x, pos.y - h - 2, m.hp, m.maxHp, boss ? '#d38c62' : '#c29d6d', boss ? 72 : 40);
-  if (boss || snapshot.self?.targetId === m.id) { ctx.font = boss ? 'bold 12px monospace' : '9px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f0d5b2'; ctx.fillText(m.name, pos.x, pos.y - h - 9); }
+  placa(pos.x, pos.y - h - 16, m.name + (m.level ? ' • Nv. ' + m.level : ''), m.hp, m.maxHp, boss ? '#ff7a2a' : '#e2342a', boss ? 76 : 52);
 }
 function telegraphs(time) {
   for (const m of snapshot.mobs) {
@@ -439,26 +233,27 @@ function drawMiniSelf(x, y, facing) {
   mctx.fillStyle = '#fff'; mctx.fill(); mctx.strokeStyle = '#000'; mctx.lineWidth = 1.5; mctx.stroke();
   miniMarker(x, y, 4, '#ff2bd6');
 }
+// Minimapa da região em volta do jogador (decisão do Pedro, 29/10): mostra um pedaço do mundo
+// centrado nele, preso às bordas do mapa; mobs, outros jogadores e o que a câmera vê, no mesmo recorte.
+const MINIMAPA_VISTA = 2400; // largura do pedaço de mundo mostrado (a altura segue a proporção do minimapa)
 function drawMinimap(onNamek = true, world = PLANETS.namek) {
-  const mapW = mini.width, mapH = mini.height;
+  if (!mctx) return; // sem minimapa na página
+  const mapW = mini.width, mapH = mini.height, self = snapshot.players.find(p => p.id === playerId);
+  const vw = Math.min(MINIMAPA_VISTA, world.w), vh = Math.min(vw * mapH / mapW, world.h);
+  const cx = self ? self.x : world.w / 2, cy = self ? self.y : world.h / 2;
+  const ox = Math.max(0, Math.min(world.w - vw, cx - vw / 2)), oy = Math.max(0, Math.min(world.h - vh, cy - vh / 2));
+  const sx = mapW / vw, sy = mapH / vh, X = x => (x - ox) * sx, Y = y => (y - oy) * sy;
   mctx.fillStyle = onNamek ? '#385a2d' : '#4f8a3a'; mctx.fillRect(0, 0, mapW, mapH);
-  const sx = mapW / world.w, sy = mapH / world.h;
-  if (onNamek && art.namekSolo.complete && art.namekSolo.naturalWidth) {
-    mctx.drawImage(art.namekSolo, 0, 0, mapW, mapH);
-    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
-  } else if (onNamek) {
-    mctx.fillStyle = '#c09b6e';
-    mctx.beginPath();
-    for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
-    mctx.fill();
-    const arena=ZONES.find(z => z.pvp); mctx.fillStyle='#a44f3655'; mctx.fillRect(arena.x*sx,arena.y*sy,arena.w*sx,arena.h*sy);
-    for (const o of OBSTACLES) { mctx.fillStyle = o.type === 'tree' ? '#92b342' : '#a8a49a'; mctx.beginPath(); mctx.arc(o.x*sx,o.y*sy,o.type === 'tree' ? 2.2 : 1.7,0,Math.PI*2); mctx.fill(); }
-    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
+  const solo = art.namekSolo;
+  if (onNamek && solo.complete && solo.naturalWidth) {
+    const kx = solo.naturalWidth / world.w, ky = solo.naturalHeight / world.h;
+    mctx.imageSmoothingEnabled = true;
+    mctx.drawImage(solo, ox * kx, oy * ky, vw * kx, vh * ky, 0, 0, mapW, mapH);
   }
-  for (const p of snapshot.players) if (p.id !== playerId) miniMarker(p.x * sx, p.y * sy, 2.5, '#5fd8ff');
-  const self = snapshot.players.find(p => p.id === playerId);
-  if (self) drawMiniSelf(self.x * sx, self.y * sy, self.facing);
-  mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
+  for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.beginPath(); mctx.arc(X(mob.x), Y(mob.y), mob.type === 'boss' ? 4 : 3, 0, Math.PI * 2); mctx.fill(); }
+  for (const p of snapshot.players) if (p.id !== playerId) miniMarker(X(p.x), Y(p.y), 2.5, '#5fd8ff');
+  mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(X(camera.x), Y(camera.y), width / camera.scale * sx, height / camera.scale * sy);
+  if (self) drawMiniSelf(X(self.x), Y(self.y), self.facing);
 }
 // Ordem de desenho de um personagem: pela posição dos pés, mas quem pisa à frente da curva da base
 // de uma casa (nas laterais a base sobe) vai na frente dela, mesmo acima da linha da base.
