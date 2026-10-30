@@ -15,7 +15,7 @@ button{cursor:pointer}
    Tudo é medido em --u (1px × escala --e, calculada em client/hud.mjs a partir do tamanho da janela).
    Faixas de largura: abaixo de 1400px os menus ficam só com ícone; abaixo de 1100px o chat some e
    os menus viram o botão ≡. Celular fica para depois (decisão do Pedro). */
-:root{--e:1;--u:calc(var(--e) * 1px);--ouro:#f2b53a;--ouro-claro:#ffd36a;--azul-hud:#0d1a3a;--azul-hud-2:#071026;--painel:rgba(10,18,44,.80);--painel-2:rgba(5,10,28,.86);--borda-azul:#3d5c98;--brilho:0 0 calc(10 * var(--u)) #ff9d2aa6}
+:root{--e:1;--u:calc(var(--e) * 1px);--ouro:#f2b53a;--ouro-claro:#ffd36a;--azul-hud:#0d1a3a;--azul-hud-2:#071026;--painel:rgba(10,18,44,.52);--painel-2:rgba(5,10,28,.60);--borda-azul:#3d5c98;--brilho:0 0 calc(10 * var(--u)) #ff9d2aa6}
 .hud{position:absolute;inset:0;pointer-events:none;font-size:calc(14 * var(--u))}
 .hud>*{pointer-events:auto}
 /* Painéis translúcidos (o jogo aparece por trás). Dourado com brilho laranja nas peças principais;
@@ -24,7 +24,7 @@ button{cursor:pointer}
 .moldura-azul{border:calc(1.5 * var(--u)) solid var(--borda-azul);border-radius:calc(10 * var(--u));background:linear-gradient(180deg,var(--painel) 0%,var(--painel-2) 100%);box-shadow:0 0 calc(6 * var(--u)) #0009,inset 0 0 calc(8 * var(--u)) #0006;backdrop-filter:blur(calc(1.5 * var(--u)))}
 
 /* Topo: logo + menus */
-.hud-topo{position:absolute;top:calc(8 * var(--u));left:calc(8 * var(--u));right:calc(8 * var(--u));height:calc(78 * var(--u));display:flex;align-items:stretch;border:calc(2 * var(--u)) solid var(--ouro);border-radius:calc(14 * var(--u));background:linear-gradient(180deg,rgba(18,30,66,.84),rgba(5,10,28,.88));box-shadow:var(--brilho);backdrop-filter:blur(calc(1.5 * var(--u)))}
+.hud-topo{position:absolute;top:calc(8 * var(--u));left:calc(8 * var(--u));right:calc(8 * var(--u));height:calc(78 * var(--u));display:flex;align-items:stretch;border:calc(2 * var(--u)) solid var(--ouro);border-radius:calc(14 * var(--u));background:linear-gradient(180deg,rgba(18,30,66,.56),rgba(5,10,28,.62));box-shadow:var(--brilho);backdrop-filter:blur(calc(1.5 * var(--u)))}
 .hud-logo{display:flex;align-items:center;gap:calc(10 * var(--u));padding:0 calc(18 * var(--u));border-right:calc(1 * var(--u)) solid #f2b53a55;flex:none}
 .hud-esfera{display:grid;place-items:center;width:calc(50 * var(--u));height:calc(50 * var(--u));border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffd68a,#f28a12 60%,#b4520a);color:#c8231b;font-size:calc(20 * var(--u));box-shadow:0 0 calc(10 * var(--u)) #f28a1288}
 .hud-marca{display:grid;line-height:.95;font-weight:900;font-size:calc(20 * var(--u));color:#ffcf3a;text-shadow:0 calc(2 * var(--u)) 0 #8a3b00}
@@ -45,7 +45,7 @@ button{cursor:pointer}
 .hud-nome{display:grid;line-height:1.1;margin-bottom:calc(2 * var(--u))}
 .hud-nome strong{font-size:calc(17 * var(--u))}
 .hud-nome span{color:#5fd0ff;font-weight:800}
-.barra{position:relative;height:calc(14 * var(--u));border-radius:calc(8 * var(--u));background:#050a18;border:calc(1 * var(--u)) solid #ffffff22;overflow:hidden}
+.barra{position:relative;height:calc(14 * var(--u));border-radius:calc(8 * var(--u));background:rgba(5,10,24,.6);border:calc(1 * var(--u)) solid #ffffff22;overflow:hidden}
 .barra i{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;transition:width .2s}
 .barra b{position:relative;display:block;text-align:center;font-size:calc(11 * var(--u));line-height:calc(13 * var(--u));text-shadow:0 calc(1 * var(--u)) calc(2 * var(--u)) #000}
 .barra-hp i{background:linear-gradient(#53e06a,#1f9a37)}
@@ -95,7 +95,7 @@ button{cursor:pointer}
 .hud-tecnicas{position:absolute;left:50%;bottom:calc(18 * var(--u));transform:translateX(-50%);display:flex;gap:calc(8 * var(--u));padding:calc(10 * var(--u)) calc(12 * var(--u))}
 .tecnica{position:relative;display:grid;justify-items:center;gap:calc(4 * var(--u));width:calc(96 * var(--u));padding:0;border:0;background:none}
 .tecnica kbd{position:absolute;top:calc(-4 * var(--u));left:calc(4 * var(--u));z-index:2;min-width:calc(18 * var(--u));padding:0 calc(3 * var(--u));border:calc(1 * var(--u)) solid #fff;border-radius:calc(3 * var(--u));background:#000c;font:700 calc(12 * var(--u))/1.3 system-ui}
-.tecnica-icone{position:relative;display:grid;place-items:center;width:calc(84 * var(--u));height:calc(70 * var(--u));border:calc(1.5 * var(--u)) solid #5a7ab8;border-radius:calc(8 * var(--u));background-color:#0a1430;background-image:url('/assets/skills-anime-sheet.png');background-repeat:no-repeat;background-size:344% 236%;overflow:hidden}
+.tecnica-icone{position:relative;display:grid;place-items:center;width:calc(84 * var(--u));height:calc(70 * var(--u));border:calc(1.5 * var(--u)) solid #5a7ab8;border-radius:calc(8 * var(--u));background-color:rgba(10,20,48,.55);background-image:url('/assets/skills-anime-sheet.png');background-repeat:no-repeat;background-size:344% 236%;overflow:hidden}
 .sprite-kame{background-position:4.6% 8.2%}.sprite-kaioken{background-position:50.1% 8.2%}.sprite-barrier{background-position:95.8% 8.2%}
 .sprite-transform{background-position:26.3% 88.7%}.sprite-genki{background-position:73.4% 88.7%}
 .item-icone{background-image:none;font-size:calc(38 * var(--u))}
@@ -111,10 +111,10 @@ button{cursor:pointer}
 
 /* Automação */
 .hud-auto{position:absolute;right:calc(12 * var(--u));bottom:calc(12 * var(--u));display:grid;gap:calc(8 * var(--u));width:calc(250 * var(--u))}
-.auto{color:#fff;display:flex;align-items:center;justify-content:center;gap:calc(10 * var(--u));padding:calc(8 * var(--u)) calc(14 * var(--u));border:calc(2 * var(--u)) solid var(--ouro);border-radius:calc(22 * var(--u));background:linear-gradient(rgba(176,92,14,.92),rgba(110,50,6,.92));font-weight:800;font-size:calc(15 * var(--u));box-shadow:var(--brilho)}
+.auto{color:#fff;display:flex;align-items:center;justify-content:center;gap:calc(10 * var(--u));padding:calc(8 * var(--u)) calc(14 * var(--u));border:calc(2 * var(--u)) solid var(--ouro);border-radius:calc(22 * var(--u));background:linear-gradient(rgba(176,92,14,.66),rgba(110,50,6,.66));font-weight:800;font-size:calc(15 * var(--u));box-shadow:var(--brilho)}
 .auto i{font-style:normal;font-size:calc(18 * var(--u))}
 
-.auto-tecnicas{border-color:#6a8cff;background:linear-gradient(rgba(36,58,130,.92),rgba(14,24,64,.92));box-shadow:0 0 calc(8 * var(--u)) #6a8cff88}
+.auto-tecnicas{border-color:#6a8cff;background:linear-gradient(rgba(36,58,130,.66),rgba(14,24,64,.66));box-shadow:0 0 calc(8 * var(--u)) #6a8cff88}
 
 /* Dica */
 .hud-dica{position:absolute;left:50%;bottom:calc(1 * var(--u));transform:translateX(-50%);font-size:calc(12 * var(--u));color:#ffffffb0;text-shadow:0 0 calc(3 * var(--u)) #000;pointer-events:none;white-space:nowrap}
