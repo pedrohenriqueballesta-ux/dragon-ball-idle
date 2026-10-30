@@ -67,8 +67,8 @@ export function atualizarHud(snapshot, playerId) {
   $('playerName').textContent = p.name; $('levelBadge').textContent = 'Nv. ' + s.level;
   $('hpBar').style.width = Math.max(0, 100 * s.hp / s.stats.hp) + '%';
   $('kiBar').style.width = Math.max(0, 100 * s.ki / s.stats.ki) + '%';
-  $('hpText').textContent = integer(s.hp) + ' / ' + integer(s.stats.hp);
-  $('kiText').textContent = integer(s.ki) + ' / ' + integer(s.stats.ki);
+  $('hpText').textContent = 'HP ' + integer(s.hp) + ' / ' + integer(s.stats.hp);
+  $('kiText').textContent = 'KI ' + integer(s.ki) + ' / ' + integer(s.stats.ki);
   const xpPct = Math.min(100, s.xp / Math.max(1, s.xpNext) * 100);
   $('xpLabel').textContent = 'Nível ' + s.level; $('xpNumbers').textContent = integer(s.xp) + ' / ' + integer(s.xpNext) + ' XP';
   $('xpBar').style.width = xpPct + '%';
@@ -251,6 +251,9 @@ export function ligarHud(contexto) {
   const fecharMenu = () => { $('hudMenus').classList.remove('aberto'); $('menuAlternar').setAttribute('aria-expanded', 'false'); };
   for (const btn of document.querySelectorAll('[data-menu]')) btn.onclick = () => { fecharMenu(); (telas[btn.dataset.menu] || (() => notify('Em breve: ' + btn.title + '.')))(); };
   $('menuAlternar').onclick = () => { const aberto = $('hudMenus').classList.toggle('aberto'); $('menuAlternar').setAttribute('aria-expanded', String(aberto)); };
+  // Setas do chat rolam as mensagens.
+  $('chatCima').onclick = () => $('chatLinhas').scrollBy({ top: -40, behavior: 'smooth' });
+  $('chatBaixo').onclick = () => $('chatLinhas').scrollBy({ top: 40, behavior: 'smooth' });
   // Ataque e técnicas automáticos (a caça automática é o botão quickHunt).
   for (const btn of document.querySelectorAll('[data-toggle]')) btn.onclick = () => action({ type: 'toggle', key: btn.dataset.toggle, value: !ctx.snapshot()?.self?.[btn.dataset.toggle] });
   for (const button of document.querySelectorAll('[data-skill]')) button.addEventListener('click', () => action({ type: 'skill', skill: button.dataset.skill }));

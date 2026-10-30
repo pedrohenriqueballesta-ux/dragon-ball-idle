@@ -40,20 +40,21 @@
           <div class="barra barra-exp"><i id="hudXpBar"></i><b id="hudXpText">EXP 0%</b></div>
         </div>
         <div class="hud-recursos">
-          <div><i aria-hidden="true">🪙</i><span>Zeni</span><b id="hudZeni">0</b></div>
-          <div><i aria-hidden="true">🎒</i><span>Mochila</span><b id="bagLabel">0 / 0 kg</b></div>
+          <div class="hud-zeni"><i aria-hidden="true">🪙</i><span>Zeni</span><b id="hudZeni">0</b></div>
+          <div class="hud-mochila"><i aria-hidden="true">🎒</i><span>Mochila<b id="bagLabel">0 / 0 kg</b></span></div>
         </div>
       </section>
-      <section id="targetHud" class="hud-alvo moldura hidden" aria-label="Alvo"><span id="targetName"></span><div class="barra barra-alvo"><i id="targetBar"></i><b id="targetHp"></b></div></section>
+      <section id="targetHud" class="hud-alvo moldura-azul hidden" aria-label="Alvo"><span id="targetName"></span><div class="barra barra-alvo"><i id="targetBar"></i><b id="targetHp"></b></div></section>
       <section class="hud-mapa moldura" aria-label="Minimapa">
         <strong id="regionName">—</strong>
         <canvas id="minimap" width="240" height="176"></canvas>
         <span id="regionType" class="hud-area">ÁREA SEGURA</span>
       </section>
-      <div class="hud-zoom moldura" aria-label="Zoom"><button type="button" id="zoomOut" aria-label="Afastar">−</button><span>🔍 Zoom <b id="zoomLabel">100%</b></span><button type="button" id="zoomIn" aria-label="Aproximar">+</button></div>
-      <div class="hud-pilulas"><span id="foodBuff" class="pilula">Comida inativa</span><span id="connection" class="pilula conexao">Conectando</span></div>
-      <section class="hud-chat moldura" aria-label="Chat">
+      <div class="hud-zoom moldura-azul" aria-label="Zoom (roda do mouse)"><span>🔍 Zoom <b id="zoomLabel">100%</b></span></div>
+      <div class="hud-pilulas"><span id="foodBuff" class="pilula moldura-azul">Comida inativa</span><span id="connection" class="pilula conexao moldura-azul">Conectando</span></div>
+      <section class="hud-chat moldura-azul" aria-label="Chat">
         <nav><button type="button" class="ativa">Local</button><button type="button" disabled title="Em breve">Global</button></nav>
+        <div class="hud-chat-setas"><button type="button" id="chatCima" aria-label="Rolar para cima">▲</button><button type="button" id="chatBaixo" aria-label="Rolar para baixo">▼</button></div>
         <div id="chatLinhas" class="hud-chat-linhas" aria-live="polite"></div>
       </section>
       <section class="hud-tecnicas moldura" aria-label="Técnicas e itens">
@@ -66,9 +67,9 @@
         <button type="button" class="tecnica item" id="kiPotionButton"><kbd>7</kbd><span class="tecnica-icone item-icone" aria-hidden="true">🧪</span><em id="kiCount" class="contagem">0</em><span id="kiCooldown" class="recarga-item"></span><strong>Recuperar Ki</strong></button>
       </section>
       <section class="hud-auto" aria-label="Automação">
-        <button type="button" id="quickHunt" class="auto auto-caca"><i aria-hidden="true">🎯</i><span>Caça automática</span><b>OFF</b></button>
-        <button type="button" data-toggle="autoAttack" class="auto"><i aria-hidden="true">⚔️</i><span>Ataque auto</span><b>OFF</b></button>
-        <button type="button" data-toggle="autoSkills" class="auto auto-tecnicas"><i aria-hidden="true">✨</i><span>Técnicas auto</span><b>OFF</b></button>
+        <button type="button" id="quickHunt" class="auto auto-caca"><i aria-hidden="true">🎯</i><span>Caça automática • <b>OFF</b></span></button>
+        <button type="button" data-toggle="autoAttack" class="auto"><i aria-hidden="true">⚔️</i><span>Ataque auto • <b>OFF</b></span></button>
+        <button type="button" data-toggle="autoSkills" class="auto auto-tecnicas"><i aria-hidden="true">✨</i><span>Técnicas auto • <b>OFF</b></span></button>
       </section>
       <footer class="hud-dica">WASD mover • Clique selecionar • Scroll zoom</footer>
     </div>

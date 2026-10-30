@@ -146,7 +146,14 @@ function screenPosition(entity, dt) {
   renderPositions.set(entity.id, p); return p;
 }
 function shadow(x, y, size = 16) { ctx.fillStyle = '#15291e66'; ctx.beginPath(); ctx.ellipse(x, y + 4, size, size * 0.35, 0, 0, Math.PI * 2); ctx.fill(); }
-function healthBar(x, y, hp, max, color, size = 40) { ctx.fillStyle = '#0c1b1c'; ctx.fillRect(x - size / 2 - 1, y - 1, size + 2, 6); ctx.fillStyle = color; ctx.fillRect(x - size / 2, y, Math.max(0, size * hp / max), 4); }
+// Placa de nome e vida sobre o personagem (modelo da HUD): texto forte com contorno e barra arredondada.
+function placa(x, y, texto, hp, max, cor, largura = 52) {
+  ctx.save(); ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 3; ctx.strokeStyle = '#000c'; ctx.strokeText(texto, x, y); ctx.fillStyle = '#fff'; ctx.fillText(texto, x, y);
+  ctx.fillStyle = '#060b18d9'; ctx.beginPath(); ctx.roundRect(x - largura / 2 - 2, y + 4, largura + 4, 9, 4); ctx.fill();
+  ctx.fillStyle = cor; ctx.beginPath(); ctx.roundRect(x - largura / 2, y + 6, Math.max(0, largura * hp / max), 5, 3); ctx.fill();
+  ctx.restore();
+}
 function drawPlayer(p, pos, time) {
   shadow(pos.x, pos.y, 20);
   const back = p.facing.y < -0.3;
@@ -163,8 +170,8 @@ function drawPlayer(p, pos, time) {
   if (!drawGoku(ctx, p, pos, time, strikeProgress)) ctx.drawImage(image, Math.round(pos.x - 21), Math.round(pos.y - 49 + bob), 42, 56);
   ctx.restore();
   if (p.charge) { ctx.fillStyle = '#bdefff'; ctx.beginPath(); ctx.arc(pos.x + p.facing.x * 26, pos.y - 16 + p.facing.y * 18, 7 + Math.sin(time * 22) * 2, 0, Math.PI * 2); ctx.fill(); }
-  if (p.id !== playerId) { healthBar(pos.x, pos.y - 61, p.hp, p.maxHp, '#72a6c4', 42); ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ecf3dd'; ctx.fillText(p.name, pos.x, pos.y - 67); }
-  else { ctx.fillStyle = '#f9d3a4'; ctx.beginPath(); ctx.moveTo(pos.x - 4, pos.y + 13); ctx.lineTo(pos.x + 4, pos.y + 13); ctx.lineTo(pos.x, pos.y + 18); ctx.fill(); }
+  placa(pos.x, pos.y - 86, p.name + ' • Nv. ' + p.level, p.hp, p.maxHp, p.id === playerId ? '#3ccf55' : '#5fb6ff');
+  if (p.id === playerId) { ctx.fillStyle = '#f9d3a4'; ctx.beginPath(); ctx.moveTo(pos.x - 4, pos.y + 13); ctx.lineTo(pos.x + 4, pos.y + 13); ctx.lineTo(pos.x, pos.y + 18); ctx.fill(); }
 }
 function drawMob(m, pos, time) {
   const boss = m.type === 'boss', size = boss ? 76 : 40, h = boss ? 100 : 53;
@@ -182,8 +189,7 @@ function drawMob(m, pos, time) {
       : drawAlien(ctx, pos.x, pos.y, size + 8, h + 5, time, m.moving, facing, phase, attackProgress, pos.travelled);
   if (!drawn) ctx.drawImage(boss ? art.freezaBoss : m.type === 'melee' ? sprites.melee : sprites.ranged, Math.round(pos.x - size / 2), Math.round(pos.y - h + 8 + (m.moving ? Math.sin(time * 14) : 0)), size, h);
   ctx.restore();
-  if (m.hp < m.maxHp || snapshot.self?.targetId === m.id || boss) healthBar(pos.x, pos.y - h - 2, m.hp, m.maxHp, boss ? '#d38c62' : '#c29d6d', boss ? 72 : 40);
-  if (boss || snapshot.self?.targetId === m.id) { ctx.font = boss ? 'bold 12px monospace' : '9px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f0d5b2'; ctx.fillText(m.name, pos.x, pos.y - h - 9); }
+  placa(pos.x, pos.y - h - 16, m.name + (m.level ? ' • Nv. ' + m.level : ''), m.hp, m.maxHp, boss ? '#ff7a2a' : '#e2342a', boss ? 76 : 52);
 }
 function telegraphs(time) {
   for (const m of snapshot.mobs) {
