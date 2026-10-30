@@ -9,16 +9,69 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- HUD em troca (ramo hud-nova): a HUD antiga saiu; a nova entra aqui, peça por peça, ligada por client/hud.mjs.
-       Fica só o essencial para jogar: o mapa, uma barra provisória, avisos, tela de derrota, joystick e as janelas. -->
+  <!-- O mapa do jogo ocupa a tela; a HUD fica por cima, ligada por client/hud.mjs. -->
   <main class="jogo">
     <canvas id="world" aria-label="Mapa do jogo. Use WASD ou as setas para movimentar." tabindex="0"></canvas>
-    <nav class="hud-provisoria" aria-label="Controles provisórios">
-      <span class="hud-provisoria-aviso">HUD em construção</span>
-      <button type="button" id="abrirMundos">Mundos</button>
-      <button type="button" id="abrirLoja">Loja</button>
-      <button type="button" id="quickHunt">▶ Caça · H</button>
-    </nav>
+    <!-- HUD nova (modelo do Pedro, 29/10). Ícones em emoji são provisórios até chegarem os desenhados.
+         Tamanhos escalam com a janela (--e, calculado em client/hud.mjs); faixas de largura no style.css. -->
+    <div class="hud">
+      <header class="hud-topo">
+        <div class="hud-logo"><span class="hud-esfera" aria-hidden="true">★</span><span class="hud-marca">DRAGON BALL<b>IDLE</b></span></div>
+        <button type="button" class="hud-menu-alternar" id="menuAlternar" aria-label="Abrir menu" aria-expanded="false">≡</button>
+        <nav class="hud-menus" id="hudMenus" aria-label="Menus do jogo">
+        <button type="button" data-menu="personagem" title="Personagem"><i aria-hidden="true">🧒</i><span>Personagem</span></button>
+        <button type="button" data-menu="tecnicas" title="Técnicas"><i aria-hidden="true">🔵</i><span>Técnicas</span></button>
+        <button type="button" data-menu="mochila" title="Mochila"><i aria-hidden="true">🎒</i><span>Mochila</span></button>
+        <button type="button" data-menu="missoes" title="Missões"><i aria-hidden="true">📜<em class="hud-selo" id="missoesSelo">!</em></i><span>Missões</span></button>
+        <button type="button" data-menu="mapa" title="Mapa"><i aria-hidden="true">🗺️</i><span>Mapa</span></button>
+        <button type="button" data-menu="loja" title="Loja"><i aria-hidden="true">🏪</i><span>Loja</span></button>
+        <button type="button" data-menu="ranking" title="Ranking"><i aria-hidden="true">🏆</i><span>Ranking</span></button>
+        <button type="button" data-menu="guilda" title="Guilda"><i aria-hidden="true">🛡️</i><span>Guilda</span></button>
+        <button type="button" data-menu="correio" title="Correio"><i aria-hidden="true">✉️</i><span>Correio</span></button>
+        <button type="button" data-menu="ajustes" title="Ajustes"><i aria-hidden="true">⚙️</i><span>Ajustes</span></button>
+        </nav>
+      </header>
+      <section class="hud-jogador moldura" aria-label="Seu personagem">
+        <img class="hud-retrato" src="/assets/goku-avatar.png" alt="Goku">
+        <div class="hud-status">
+          <div class="hud-nome"><strong id="playerName">Goku</strong><span id="levelBadge">Nv. 1</span></div>
+          <div class="barra barra-hp"><i id="hpBar"></i><b id="hpText">0 / 0</b></div>
+          <div class="barra barra-ki"><i id="kiBar"></i><b id="kiText">0 / 0</b></div>
+          <div class="barra barra-exp"><i id="hudXpBar"></i><b id="hudXpText">EXP 0%</b></div>
+        </div>
+        <div class="hud-recursos">
+          <div><i aria-hidden="true">🪙</i><span>Zeni</span><b id="hudZeni">0</b></div>
+          <div><i aria-hidden="true">🎒</i><span>Mochila</span><b id="bagLabel">0 / 0 kg</b></div>
+        </div>
+      </section>
+      <section id="targetHud" class="hud-alvo moldura hidden" aria-label="Alvo"><span id="targetName"></span><div class="barra barra-alvo"><i id="targetBar"></i><b id="targetHp"></b></div></section>
+      <section class="hud-mapa moldura" aria-label="Minimapa">
+        <strong id="regionName">—</strong>
+        <canvas id="minimap" width="240" height="176"></canvas>
+        <span id="regionType" class="hud-area">ÁREA SEGURA</span>
+      </section>
+      <div class="hud-zoom moldura" aria-label="Zoom"><button type="button" id="zoomOut" aria-label="Afastar">−</button><span>🔍 Zoom <b id="zoomLabel">100%</b></span><button type="button" id="zoomIn" aria-label="Aproximar">+</button></div>
+      <div class="hud-pilulas"><span id="foodBuff" class="pilula">Comida inativa</span><span id="connection" class="pilula conexao">Conectando</span></div>
+      <section class="hud-chat moldura" aria-label="Chat">
+        <nav><button type="button" class="ativa">Local</button><button type="button" disabled title="Em breve">Global</button></nav>
+        <div id="chatLinhas" class="hud-chat-linhas" aria-live="polite"></div>
+      </section>
+      <section class="hud-tecnicas moldura" aria-label="Técnicas e itens">
+        <button type="button" class="tecnica" data-skill="kame"><kbd>1</kbd><span class="tecnica-icone sprite-kame" aria-hidden="true"></span><strong>Kamehameha</strong><small></small></button>
+        <button type="button" class="tecnica" data-skill="kaioken"><kbd>2</kbd><span class="tecnica-icone sprite-kaioken" aria-hidden="true"></span><strong>Kaioken</strong><small></small></button>
+        <button type="button" class="tecnica" data-skill="barrier"><kbd>3</kbd><span class="tecnica-icone sprite-barrier" aria-hidden="true"></span><strong>Barreira de Ki</strong><small></small></button>
+        <button type="button" class="tecnica" id="transformButton"><kbd>4</kbd><span class="tecnica-icone sprite-transform" aria-hidden="true"></span><strong>Super Saiyajin</strong><small id="transformText"></small></button>
+        <button type="button" class="tecnica" data-skill="genki"><kbd>5</kbd><span class="tecnica-icone sprite-genki" aria-hidden="true"></span><strong>Genki Dama</strong><small></small></button>
+        <button type="button" class="tecnica item" id="seedButton"><kbd>6</kbd><span class="tecnica-icone item-icone" aria-hidden="true">🌱</span><em id="seedCount" class="contagem">0</em><span id="seedCooldown" class="recarga-item"></span><strong>Semente</strong></button>
+        <button type="button" class="tecnica item" id="kiPotionButton"><kbd>7</kbd><span class="tecnica-icone item-icone" aria-hidden="true">🧪</span><em id="kiCount" class="contagem">0</em><span id="kiCooldown" class="recarga-item"></span><strong>Recuperar Ki</strong></button>
+      </section>
+      <section class="hud-auto" aria-label="Automação">
+        <button type="button" id="quickHunt" class="auto auto-caca"><i aria-hidden="true">🎯</i><span>Caça automática</span><b>OFF</b></button>
+        <button type="button" data-toggle="autoAttack" class="auto"><i aria-hidden="true">⚔️</i><span>Ataque auto</span><b>OFF</b></button>
+        <button type="button" data-toggle="autoSkills" class="auto auto-tecnicas"><i aria-hidden="true">✨</i><span>Técnicas auto</span><b>OFF</b></button>
+      </section>
+      <footer class="hud-dica">WASD mover • Clique selecionar • Scroll zoom</footer>
+    </div>
     <div id="joystick" aria-label="Direcional de toque"><div id="joystickKnob"></div></div>
     <div id="respawn" class="respawn hidden"><b>Você foi derrotado</b><span id="respawnText">Retornando à vila...</span></div>
     <div id="notifications" class="notifications" aria-live="polite"></div>
@@ -27,11 +80,6 @@
   <dialog id="shopDialog"><button class="close-dialog" data-close="shopDialog" aria-label="Fechar">×</button><span class="eyebrow">VILA DO LAGO</span><h2>Mercado de suprimentos</h2><p id="shopNotice" aria-live="polite">Chegue perto do mercador para comprar e vender.</p><div id="shopItems" class="shop-items"></div><button id="sellButton" class="primary">Vender sucatas e cristais</button><small>Todos os preços são provisórios para o protótipo.</small></dialog>
   <dialog id="planetsDialog" class="worlds-dialog"><div class="worlds-card"><div class="worlds-head"><span class="worlds-title">ESCOLHA O MUNDO</span><button type="button" class="worlds-x" data-close="planetsDialog" aria-label="Fechar">×</button></div><div class="worlds-grid"><button type="button" class="world-card" data-planet="cidades"><span class="world-orb" style="background-image:url(/assets/worlds/terra.webp)"></span><strong>Cidades</strong><small class="world-status">Entrar</small></button><button type="button" class="world-card" data-planet="namek"><span class="world-orb" style="background-image:url(/assets/worlds/namek.webp)"></span><strong>Planeta Namek</strong><small class="world-status">Viajar</small></button><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/androides.webp)"></span><strong>Ilha dos Androides</strong><small>Abre no Nível 147</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/torneio-mundial.webp)"></span><strong>Torneio Mundial</strong><small>Abre no Nível 201</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/kaioshin.webp)"></span><strong>Planeta Sagrado Kaioshin</strong><small>Abre no Nível 247</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/torneio.webp)"></span><strong>Torneio dos Universos</strong><small>Abre no Nível 301</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/deuses.webp)"></span><strong>Reino dos Deuses</strong><small>Abre no Nível 334</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/futuro.webp)"></span><strong>Linha do Tempo Alterada</strong><small>Abre no Nível 387</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/lendas.webp)"></span><strong>Torneio do Poder</strong><small>Abre no Nível 427</small></div><div class="world-card locked"><span class="world-orb" style="background-image:url(/assets/worlds/lendas.webp)"></span><strong>Lendas</strong><small>Abre no Nível 481</small></div></div></div></dialog>
   <dialog id="huntDialog" class="hunt-dialog"><div class="hunt-card"><div class="hunt-head"><button type="button" class="hunt-back" id="huntBack" aria-label="Voltar">&lsaquo;</button><span class="hunt-title" id="huntTitle">Terra</span><span class="hunt-sub" id="huntSub">Nível de Conta</span><button type="button" class="hunt-x" data-close="huntDialog" aria-label="Fechar">&times;</button></div><div class="hunt-map" id="huntMap"><div class="hunt-pins" id="huntPins"></div></div><div class="hunt-foot" id="huntFoot">Escolha uma caçada no mapa</div></div></dialog>
-  <script>
-    // Barra provisória: abre as janelas que continuam existindo. Sai quando a HUD nova chegar.
-    document.getElementById('abrirMundos').addEventListener('click', () => document.getElementById('planetsDialog').showModal());
-    document.getElementById('abrirLoja').addEventListener('click', () => document.getElementById('shopDialog').showModal());
-  </script>
   <script type="module" src="/client/game.mjs"></script>
 </body>
 </html>

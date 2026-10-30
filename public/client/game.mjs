@@ -69,11 +69,12 @@ document.addEventListener('keydown', e => {
   if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) e.preventDefault();
   keys.add(key); sendInput(); if (e.repeat) return;
   const skills = { '1': 'kame', '2': 'kaioken', '3': 'barrier', '5': 'genki', ' ': 'basic', 'shift': 'dash' };
+  // 6 e 7: semente e poção de Ki, na barra de atalhos da HUD nova (R e Q continuam valendo).
   if (skills[key]) action({ type: 'skill', skill: skills[key] });
   else if (key === '4' || key === 't') action({ type: 'transform' });
   else if (key === 'f') action({ type: 'food' });
-  else if (key === 'q') action({ type: 'potion' });
-  else if (key === 'r') action({ type: 'seed' });
+  else if (key === 'q' || key === '7') action({ type: 'potion' });
+  else if (key === 'r' || key === '6') action({ type: 'seed' });
   else if (key === 'h') alternarCaca();
 });
 document.addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); sendInput(); });
@@ -226,27 +227,27 @@ function drawMiniSelf(x, y, facing) {
   mctx.fillStyle = '#fff'; mctx.fill(); mctx.strokeStyle = '#000'; mctx.lineWidth = 1.5; mctx.stroke();
   miniMarker(x, y, 4, '#ff2bd6');
 }
+// Minimapa da região em volta do jogador (decisão do Pedro, 29/10): mostra um pedaço do mundo
+// centrado nele, preso às bordas do mapa; mobs, outros jogadores e o que a câmera vê, no mesmo recorte.
+const MINIMAPA_VISTA = 2400; // largura do pedaço de mundo mostrado (a altura segue a proporção do minimapa)
 function drawMinimap(onNamek = true, world = PLANETS.namek) {
-  if (!mctx) return; // sem minimapa na página (HUD em troca)
-  const mapW = mini.width, mapH = mini.height;
+  if (!mctx) return; // sem minimapa na página
+  const mapW = mini.width, mapH = mini.height, self = snapshot.players.find(p => p.id === playerId);
+  const vw = Math.min(MINIMAPA_VISTA, world.w), vh = Math.min(vw * mapH / mapW, world.h);
+  const cx = self ? self.x : world.w / 2, cy = self ? self.y : world.h / 2;
+  const ox = Math.max(0, Math.min(world.w - vw, cx - vw / 2)), oy = Math.max(0, Math.min(world.h - vh, cy - vh / 2));
+  const sx = mapW / vw, sy = mapH / vh, X = x => (x - ox) * sx, Y = y => (y - oy) * sy;
   mctx.fillStyle = onNamek ? '#385a2d' : '#4f8a3a'; mctx.fillRect(0, 0, mapW, mapH);
-  const sx = mapW / world.w, sy = mapH / world.h;
-  if (onNamek && art.namekSolo.complete && art.namekSolo.naturalWidth) {
-    mctx.drawImage(art.namekSolo, 0, 0, mapW, mapH);
-    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
-  } else if (onNamek) {
-    mctx.fillStyle = '#c09b6e';
-    mctx.beginPath();
-    for (const [x,y,w,h,r] of CLEARINGS) mctx.roundRect(x*sx,y*sy,w*sx,h*sy,r*Math.min(sx,sy));
-    mctx.fill();
-    const arena=ZONES.find(z => z.pvp); mctx.fillStyle='#a44f3655'; mctx.fillRect(arena.x*sx,arena.y*sy,arena.w*sx,arena.h*sy);
-    for (const o of OBSTACLES) { mctx.fillStyle = o.type === 'tree' ? '#92b342' : '#a8a49a'; mctx.beginPath(); mctx.arc(o.x*sx,o.y*sy,o.type === 'tree' ? 2.2 : 1.7,0,Math.PI*2); mctx.fill(); }
-    for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.fillRect(mob.x*sx-1,mob.y*sy-1,2,2); }
+  const solo = art.namekSolo;
+  if (onNamek && solo.complete && solo.naturalWidth) {
+    const kx = solo.naturalWidth / world.w, ky = solo.naturalHeight / world.h;
+    mctx.imageSmoothingEnabled = true;
+    mctx.drawImage(solo, ox * kx, oy * ky, vw * kx, vh * ky, 0, 0, mapW, mapH);
   }
-  for (const p of snapshot.players) if (p.id !== playerId) miniMarker(p.x * sx, p.y * sy, 2.5, '#5fd8ff');
-  const self = snapshot.players.find(p => p.id === playerId);
-  if (self) drawMiniSelf(self.x * sx, self.y * sy, self.facing);
-  mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(camera.x * sx, camera.y * sy, width / camera.scale * sx, height / camera.scale * sy);
+  for (const mob of snapshot.mobs) { mctx.fillStyle = mob.type === 'boss' ? '#ff9369' : '#d96049'; mctx.beginPath(); mctx.arc(X(mob.x), Y(mob.y), mob.type === 'boss' ? 4 : 3, 0, Math.PI * 2); mctx.fill(); }
+  for (const p of snapshot.players) if (p.id !== playerId) miniMarker(X(p.x), Y(p.y), 2.5, '#5fd8ff');
+  mctx.strokeStyle = '#fff0c488'; mctx.lineWidth = 1; mctx.strokeRect(X(camera.x), Y(camera.y), width / camera.scale * sx, height / camera.scale * sy);
+  if (self) drawMiniSelf(X(self.x), Y(self.y), self.facing);
 }
 // Ordem de desenho de um personagem: pela posição dos pés, mas quem pisa à frente da curva da base
 // de uma casa (nas laterais a base sobe) vai na frente dela, mesmo acima da linha da base.

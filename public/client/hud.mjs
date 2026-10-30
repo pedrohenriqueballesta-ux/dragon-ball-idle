@@ -44,11 +44,27 @@ export function notify(text) {
   const element = document.createElement('div'); element.className = 'toast'; element.textContent = text;
   $('notifications').append(element); setTimeout(() => element.remove(), 4200);
   while ($('notifications').children.length > 3) $('notifications').firstChild.remove();
+  // O chat da HUD mostra os avisos como mensagens do sistema (o chat entre jogadores ainda não existe).
+  const linhas = document.getElementById('chatLinhas');
+  if (linhas) {
+    const linha = document.createElement('p'), tag = document.createElement('b');
+    tag.textContent = '[Sistema] '; linha.append(tag, text); linhas.append(linha);
+    while (linhas.children.length > 40) linhas.firstChild.remove();
+    linhas.scrollTop = linhas.scrollHeight;
+  }
 }
+
+// Escala da HUD: tudo é medido em múltiplos de --e (1 = janela de 1600×950). Acompanha o tamanho da
+// janela e a resolução; o teto e o piso evitam HUD gigante num 4K e ilegível numa janela pequena.
+function ajustarEscala() {
+  const e = Math.max(0.6, Math.min(2.2, innerWidth / 1600, innerHeight / 950));
+  document.documentElement.style.setProperty('--e', e.toFixed(3));
+}
+ajustarEscala(); addEventListener('resize', ajustarEscala);
 
 export function atualizarHud(snapshot, playerId) {
   const s = snapshot?.self, p = snapshot?.players.find(v => v.id === playerId); if (!s || !p) return;
-  $('playerName').textContent = p.name; $('levelBadge').textContent = 'Lv. ' + s.level;
+  $('playerName').textContent = p.name; $('levelBadge').textContent = 'Nv. ' + s.level;
   $('hpBar').style.width = Math.max(0, 100 * s.hp / s.stats.hp) + '%';
   $('kiBar').style.width = Math.max(0, 100 * s.ki / s.stats.ki) + '%';
   $('hpText').textContent = integer(s.hp) + ' / ' + integer(s.stats.hp);
@@ -56,7 +72,7 @@ export function atualizarHud(snapshot, playerId) {
   const xpPct = Math.min(100, s.xp / Math.max(1, s.xpNext) * 100);
   $('xpLabel').textContent = 'Nível ' + s.level; $('xpNumbers').textContent = integer(s.xp) + ' / ' + integer(s.xpNext) + ' XP';
   $('xpBar').style.width = xpPct + '%';
-  $('hudXpBar').style.width = xpPct + '%'; $('hudXpText').textContent = 'EXP · ' + Math.round(xpPct) + '%';
+  $('hudXpBar').style.width = xpPct + '%'; $('hudXpText').textContent = 'EXP ' + Math.round(xpPct) + '%';
   $('formLabel').textContent = s.transformed ? 'SUPER SAIYAJIN' : 'FORMA BASE';
   $('nextUnlock').textContent = s.level < 2 ? 'Próximo: Kaioken + Barreira de Ki · NV. 2' : s.level < 3 ? 'Próximo: Kamehameha · NV. 3' : s.level < 5 ? 'Próximo: Super Saiyajin · NV. 5' : s.level < 10 ? 'Próximo: Genki Dama · NV. 10' : 'Todas as técnicas principais desbloqueadas.';
   const stats = [['Vida', integer(s.stats.hp)], ['Ki', integer(s.stats.ki)], ['Ataque', s.stats.attack.toFixed(1)], ['Defesa', s.stats.defense.toFixed(1)], ['Cura / comida', s.stats.healing.toFixed(2) + '×'], ['Mochila', s.stats.capacity.toFixed(1) + ' kg'], ['Chance loot', Math.round(s.stats.lootChance * 100) + '%'], ['Movimento', Math.round(s.stats.mobility)]];
@@ -66,22 +82,28 @@ export function atualizarHud(snapshot, playerId) {
   $('huntButton').textContent = s.autoHunt ? 'Pausar caça automática  ■' : 'Iniciar caça automática  ↗';
   $('foodCount').textContent = s.inventory.food; $('kiCount').textContent = s.inventory.ki;
   $('zeni').textContent = integer(s.zeni) + ' Z'; $('materials').textContent = s.inventory.scrap + ' sucatas · ' + s.inventory.crystal + ' cristais';
-  $('bagLabel').textContent = s.weight.toFixed(1) + ' / ' + s.stats.capacity.toFixed(1) + ' KG';
+  $('bagLabel').textContent = s.weight.toFixed(1).replace('.', ',') + ' / ' + Math.round(s.stats.capacity) + ' kg';
+  $('hudZeni').textContent = integer(s.zeni);
   $('seedSelect').value = String(s.seedSelected);
   for (const option of $('seedSelect').options) option.textContent = option.value + '% · ' + (s.inventory['seed' + option.value] || 0);
   $('seedButton').disabled = s.seedRemaining > 0 || !s.inventory['seed' + s.seedSelected];
-  $('seedButton').textContent = s.seedRemaining > 0 ? Math.ceil(s.seedRemaining) + 's' : 'Usar · R';
+  $('seedCount').textContent = s.inventory['seed' + s.seedSelected] || 0;
+  $('seedCooldown').textContent = s.seedRemaining > 0 ? Math.ceil(s.seedRemaining) + 's' : '';
+  $('kiPotionButton').disabled = s.kiRemaining > 0 || !s.inventory.ki;
+  $('kiCooldown').textContent = s.kiRemaining > 0 ? Math.ceil(s.kiRemaining) + 's' : '';
   $('seedStatus').textContent = s.seedRemaining > 0 ? 'Todas as sementes em recarga · ' + Math.ceil(s.seedRemaining) + 's' : 'Cura instantânea · recarga compartilhada de 20s';
   $('seedStatus').classList.toggle('waiting', s.seedRemaining > 0);
   $('kiPotionText').textContent = s.kiRemaining > 0 ? 'Recarga: ' + Math.ceil(s.kiRemaining) + 's' : 'Recupera 45% · Q';
-  $('foodBuff').textContent = s.foodRemaining > 0 ? '🍖 ' + (CONFIG.foodHealPerSecond * s.stats.healing).toFixed(1) + ' vida/s · ' + clock(s.foodRemaining) : 'Comida inativa · F para comer';
+  $('foodBuff').textContent = s.foodRemaining > 0 ? '🍖 Comida • ' + clock(s.foodRemaining) : '🍖 Sem comida • F';
   $('foodBuff').classList.toggle('inactive', s.foodRemaining <= 0);
   $('huntStatus').textContent = s.autoHunt ? 'CAÇA AUTOMÁTICA ATIVA' : 'Exploração manual';
-  $('quickHunt').textContent = s.autoHunt ? '❚❚ Pausar caça · H' : '▶ Caça · H'; $('quickHunt').classList.toggle('running', s.autoHunt);
-  const z = zoneAt(p.x, p.y);
-  $('regionName').textContent = snapshot.planet !== 'namek' ? (PLANETS[snapshot.planet]?.name || 'Terra') : (z?.name || 'Trilhas de Namekusei');
-  $('regionType').textContent = snapshot.planet !== 'namek' ? 'PLANETA SEGURO' : (z?.pvp ? 'COMBATE PVP HABILITADO' : 'REGIÃO PVE');
-  document.querySelector('.region')?.classList.toggle('pvp', Boolean(z?.pvp));
+  for (const [botao, ligado] of [[$('quickHunt'), s.autoHunt], ...[...document.querySelectorAll('[data-toggle]')].map(b => [b, s[b.dataset.toggle]])]) {
+    botao.classList.toggle('ligado', Boolean(ligado)); const estado = botao.querySelector('b'); if (estado) estado.textContent = ligado ? 'ON' : 'OFF';
+  }
+  const z = zoneAt(p.x, p.y), seguro = snapshot.planet !== 'namek' || z?.id === 'vila';
+  $('regionName').textContent = z?.name || (snapshot.planet === 'namek' ? 'Trilhas de Namekusei' : PLANETS[snapshot.planet]?.name || 'Terra');
+  $('regionType').textContent = z?.pvp ? 'ÁREA PVP' : seguro ? 'ÁREA SEGURA' : 'ÁREA DE CAÇA';
+  for (const [classe, ligado] of [['pvp', Boolean(z?.pvp)], ['seguro', !z?.pvp && seguro]]) document.querySelector('.hud-mapa')?.classList.toggle(classe, ligado);
   $('onlineText').textContent = snapshot.players.length + (snapshot.players.length === 1 ? ' jogador conectado' : ' jogadores conectados');
   $('coordsText').textContent = 'X: ' + Math.round(p.x) + '   Y: ' + Math.round(p.y);
   $('missionKills').textContent = Math.min(10, s.kills || 0);
@@ -89,7 +111,7 @@ export function atualizarHud(snapshot, playerId) {
   $('missionLevel').textContent = s.level;
   const target = snapshot.mobs.find(m => m.id === s.targetId) || snapshot.players.find(v => v.id === s.targetId);
   $('targetHud').classList.toggle('hidden', !target || target.hp <= 0);
-  if (target) { $('targetName').textContent = target.name + ' · ' + integer(target.hp) + ' PV'; $('targetBar').style.width = 100 * target.hp / target.maxHp + '%'; }
+  if (target) { $('targetName').textContent = target.name + (target.level ? ' • Nv. ' + target.level : ''); $('targetBar').style.width = 100 * target.hp / target.maxHp + '%'; $('targetHp').textContent = integer(target.hp) + ' / ' + integer(target.maxHp); }
   const skillState = {
     kame: { required: CONFIG.skills.kame, cost: CONFIG.skillCosts.kame, cooldown: CONFIG.skillCooldowns.kame, remaining: s.kameRemaining || 0, text: s.level < CONFIG.skills.kame ? CONFIG.skillCooldowns.kame + 's' : s.kameRemaining > 0 ? s.kameRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kame + 's' },
     kaioken: { required: CONFIG.skills.kaioken, cost: CONFIG.skillCosts.kaioken, cooldown: CONFIG.skillCooldowns.kaioken, remaining: s.kaiokenRemaining || 0, text: s.level < CONFIG.skills.kaioken ? CONFIG.skillCooldowns.kaioken + 's' : s.kaiokenActive ? 'ATIVO' : s.kaiokenRemaining > 0 ? s.kaiokenRemaining.toFixed(1) + 's' : CONFIG.skillCooldowns.kaioken + 's', active: s.kaiokenActive },
@@ -224,6 +246,13 @@ export function alternarCaca() {
 // Liga os botões e janelas da HUD ao jogo. Chamado uma vez por game.mjs.
 export function ligarHud(contexto) {
   ctx = contexto;
+  // Menus do topo: Loja e Mapa abrem janelas que já existem; os outros ainda não têm tela.
+  const telas = { loja: () => $('shopDialog').showModal(), mapa: () => $('planetsDialog').showModal() };
+  const fecharMenu = () => { $('hudMenus').classList.remove('aberto'); $('menuAlternar').setAttribute('aria-expanded', 'false'); };
+  for (const btn of document.querySelectorAll('[data-menu]')) btn.onclick = () => { fecharMenu(); (telas[btn.dataset.menu] || (() => notify('Em breve: ' + btn.title + '.')))(); };
+  $('menuAlternar').onclick = () => { const aberto = $('hudMenus').classList.toggle('aberto'); $('menuAlternar').setAttribute('aria-expanded', String(aberto)); };
+  // Ataque e técnicas automáticos (a caça automática é o botão quickHunt).
+  for (const btn of document.querySelectorAll('[data-toggle]')) btn.onclick = () => action({ type: 'toggle', key: btn.dataset.toggle, value: !ctx.snapshot()?.self?.[btn.dataset.toggle] });
   for (const button of document.querySelectorAll('[data-skill]')) button.addEventListener('click', () => action({ type: 'skill', skill: button.dataset.skill }));
   for (const key of ['autoAttack', 'autoSkills', 'autoFood', 'autoKi', 'autoSeed']) $(key).addEventListener('change', () => action({ type: 'toggle', key, value: $(key).checked }));
   $('huntButton').addEventListener('click', alternarCaca);
